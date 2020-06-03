@@ -16,7 +16,11 @@ MAKE_ARTIFACT_RUNTIME = '3:00:00'
 MAKE_ARTIFACT_SLEEP = 10
 
 LOCATIONS = [
-    # TODO - project locations here
+    'Tianjin',
+    'Jiangsu',
+    'Guangdong',
+    'Henan',
+    'Heilongjiang',
 ]
 
 

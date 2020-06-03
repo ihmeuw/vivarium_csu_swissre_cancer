@@ -17,32 +17,32 @@ configuration:
         artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_cancer/{{ location_sanitized }}.hdf
     interpolation:
         order: 0
-        extrapolate: False
+        extrapolate: True
     randomness:
         map_size: 1_000_000
         key_columns: ['entrance_time', 'age']
         random_seed: 0
     time:
         start:
-            year: 2005
-            month: 7
-            day: 2
+            year: 2020
+            month: 1
+            day: 1
         end:
-            year: 2010
-            month: 7
-            day: 2
-        step_size: 1 # Days
+            year: 2040
+            month: 12
+            day: 31
+        step_size: 30 # Days
     population:
-        population_size: 100
-        age_start: 0
-        age_end: 100
+        population_size: 100000
+        age_start: 15
+        age_end: 95
 
     metrics:
         disability:
-            by_age: False
-            by_sex: False
-            by_year: False
+            by_age: True
+            by_sex: True
+            by_year: True
         mortality:
-            by_age: False
-            by_sex: False
-            by_year: False
+            by_age: True
+            by_sex: True
+            by_year: True
