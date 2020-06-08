@@ -17,6 +17,7 @@ configuration:
         artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_cancer/{{ location_sanitized }}.hdf
     interpolation:
         order: 0
+        # TODO change to False once we have data for all dates
         extrapolate: True
     randomness:
         map_size: 1_000_000

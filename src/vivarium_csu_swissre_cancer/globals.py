@@ -1,5 +1,5 @@
 import itertools
-
+from pathlib import Path
 from typing import NamedTuple
 
 ####################
@@ -7,7 +7,7 @@ from typing import NamedTuple
 ####################
 
 PROJECT_NAME = 'vivarium_csu_swissre_cancer'
-CLUSTER_PROJECT = 'proj_cost_effect'
+CLUSTER_PROJECT = 'proj_csu'
 
 CLUSTER_QUEUE = 'all.q'
 MAKE_ARTIFACT_MEM = '3G'
@@ -16,12 +16,17 @@ MAKE_ARTIFACT_RUNTIME = '3:00:00'
 MAKE_ARTIFACT_SLEEP = 10
 
 LOCATIONS = [
-    'Tianjin',
-    'Jiangsu',
-    'Guangdong',
-    'Henan',
-    'Heilongjiang',
+    'SwissRE Coverage',
 ]
+
+
+SWISSRE_LOCATION_WEIGHTS = {
+    'Tianjin': 0.18,
+    'Jiangsu': 0.28,
+    'Guangdong': 0.24,
+    'Henan': 0.17,
+    'Heilongjiang': 0.16,
+}
 
 
 #############
@@ -30,20 +35,29 @@ LOCATIONS = [
 
 METADATA_LOCATIONS = 'metadata.locations'
 
-POPULATION_STRUCTURE = 'population.structure'
-POPULATION_AGE_BINS = 'population.age_bins'
-POPULATION_DEMOGRAPHY = 'population.demographic_dimensions'
-POPULATION_TMRLE = 'population.theoretical_minimum_risk_life_expectancy'
 
-ALL_CAUSE_CSMR = 'cause.all_causes.cause_specific_mortality_rate'
+class __Population(NamedTuple):
+    STRUCTURE: str = 'population.structure'
+    AGE_BINS: str = 'population.age_bins'
+    DEMOGRAPHY: str = 'population.demographic_dimensions'
+    TMRLE: str = 'population.theoretical_minimum_risk_life_expectancy'
+    ACMR: str = 'cause.all_causes.cause_specific_mortality_rate'
 
-# TODO - sample keys of type EntityKey used to identify data in the model.
-# For more information see the tutorial:
-# https://vivarium-inputs.readthedocs.io/en/latest/tutorials/pulling_data.html#entity-measure-data
-# DIARRHEA_PREVALENCE = 'cause.diarrheal_diseases.prevalence'
-# STUNTING_CATEGORIES = 'risk_factor.child_stunting.categories'
-# STUNTING_EXPOSURE_MEAN = 'alternative_risk_factor.child_stunting.exposure'
+    @property
+    def name(self):
+        return 'population'
 
+    @property
+    def log_name(self):
+        return 'population'
+
+
+POPULATION = __Population()
+
+
+MAKE_ARTIFACT_KEY_GROUPS = [
+    POPULATION,
+]
 
 ###########################
 # Disease Model variables #
