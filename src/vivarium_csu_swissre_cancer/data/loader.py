@@ -59,24 +59,24 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
 
 def load_population_structure(key: str, location: str) -> pd.DataFrame:
+    def get_row(sex, year):
+        return {
+            'location': location,
+            'sex': sex,
+            'age_start': 0,
+            'age_end': 85,
+            'year_start': year,
+            'year_end': year + 1,
+            'value': 50,
+        }
+
+    # TODO there is an issue in vivarium_public_health.population.data_transformations.assign_demographic_proportions()
+    #   where this fails if there is only one provided year
     return pd.DataFrame([
-        {
-            'location': location,
-            'sex': 'Male',
-            'age_start': 0,
-            'age_end': 85,
-            'year_start': 2019,
-            'year_end': 2020,
-            'value': 50,
-        }, {
-            'location': location,
-            'sex': 'Female',
-            'age_start': 0,
-            'age_end': 85,
-            'year_start': 2019,
-            'year_end': 2020,
-            'value': 50,
-        },
+        get_row('Male', 2019),
+        get_row('Female', 2019),
+        get_row('Male', 2020),
+        get_row('Female', 2020),
     ]).set_index(['location', 'sex', 'age_start', 'age_end', 'year_start', 'year_end'])
 
 
