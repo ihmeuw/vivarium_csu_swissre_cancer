@@ -55,8 +55,39 @@ class __Population(NamedTuple):
 POPULATION = __Population()
 
 
+class __BreastCancer(NamedTuple):
+    LCIS_PREVALENCE_RATIO: str = 'sequela.lobular_carcinoma_in_situ.prevalence_ratio'
+    DCIS_PREVALENCE_RATIO: str = 'sequela.ductal_carcinoma_in_situ.prevalence_ratio'
+    LCIS_PREVALENCE: str = 'sequela.lobular_carcinoma_in_situ.prevalence'
+    DCIS_PREVALENCE: str = 'sequela.ductal_carcinoma_in_situ.prevalence'
+    PREVALENCE: str = 'cause.breast_cancer.prevalence'
+    LCIS_INCIDENCE_RATE: str = 'sequela.lobular_carcinoma_in_situ.incidence_rate'
+    DCIS_INCIDENCE_RATE: str = 'sequela.ductal_carcinoma_in_situ.incidence_rate'
+    INCIDENCE_RATE: str = 'cause.breast_cancer.incidence_rate'
+    LCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.lobular_carcinoma_in_situ.transition_rate'
+    DCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.ductal_carcinoma_in_situ.transition_rate'
+    LCIS_DISABILITY_WEIGHT: str = 'sequela.lobular_carcinoma_in_situ.disability_weight'
+    DCIS_DISABILITY_WEIGHT: str = 'sequela.ductal_carcinoma_in_situ.disability_weight'
+    DISABILITY_WEIGHT: str = 'cause.breast_cancer.disability_weight'
+    EMR: str = 'cause.breast_cancer.excess_mortality_rate'
+    CSMR: str = 'cause.breast_cancer.cause_specific_mortality_rate'
+    RESTRICTIONS: str = 'cause.breast_cancer.restrictions'
+
+    @property
+    def name(self):
+        return 'breast_cancer'
+
+    @property
+    def log_name(self):
+        return 'breast cancer'
+
+
+BREAST_CANCER = __BreastCancer()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
+    BREAST_CANCER
 ]
 
 ###########################
