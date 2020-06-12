@@ -66,8 +66,6 @@ class __BreastCancer(NamedTuple):
     INCIDENCE_RATE: str = 'cause.breast_cancer.incidence_rate'
     LCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.lobular_carcinoma_in_situ.transition_rate'
     DCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.ductal_carcinoma_in_situ.transition_rate'
-    LCIS_DISABILITY_WEIGHT: str = 'sequela.lobular_carcinoma_in_situ.disability_weight'
-    DCIS_DISABILITY_WEIGHT: str = 'sequela.ductal_carcinoma_in_situ.disability_weight'
     DISABILITY_WEIGHT: str = 'cause.breast_cancer.disability_weight'
     EMR: str = 'cause.breast_cancer.excess_mortality_rate'
     CSMR: str = 'cause.breast_cancer.cause_specific_mortality_rate'
@@ -94,24 +92,46 @@ MAKE_ARTIFACT_KEY_GROUPS = [
 # Disease Model variables #
 ###########################
 
-# TODO - sample states and transitions
-DIARRHEA_MODEL_NAME = 'diarrheal_diseases'
-DIARRHEA_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{DIARRHEA_MODEL_NAME}'
-DIARRHEA_WITH_CONDITION_STATE_NAME = DIARRHEA_MODEL_NAME
-DIARRHEA_MODEL_STATES = (DIARRHEA_SUSCEPTIBLE_STATE_NAME, DIARRHEA_WITH_CONDITION_STATE_NAME)
-DIARRHEA_MODEL_TRANSITIONS = (
-    f'{DIARRHEA_SUSCEPTIBLE_STATE_NAME}_TO_{DIARRHEA_WITH_CONDITION_STATE_NAME}',
-    f'{DIARRHEA_WITH_CONDITION_STATE_NAME}_TO_{DIARRHEA_SUSCEPTIBLE_STATE_NAME}',
+
+class TransitionString(str):
+
+    def __new__(cls, value):
+        # noinspection PyArgumentList
+        obj = str.__new__(cls, value.lower())
+        obj.from_state, obj.to_state = value.split('_TO_')
+        return obj
+
+
+BREAST_CANCER_MODEL_NAME = BREAST_CANCER.name
+BREAST_CANCER_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{BREAST_CANCER_MODEL_NAME}'
+LCIS_STATE_NAME = 'lobular_carcinoma_in_situ'
+DCIS_STATE_NAME = 'ductal_carcinoma_in_situ'
+BREAST_CANCER_STATE_NAME = 'breast_cancer'
+BREAST_CANCER_MODEL_STATES = (
+    BREAST_CANCER_SUSCEPTIBLE_STATE_NAME,
+    LCIS_STATE_NAME,
+    DCIS_STATE_NAME,
+    BREAST_CANCER_STATE_NAME
+)
+BREAST_CANCER_MODEL_TRANSITIONS = (
+    TransitionString(f'{BREAST_CANCER_SUSCEPTIBLE_STATE_NAME}_TO_{LCIS_STATE_NAME}'),
+    TransitionString(f'{BREAST_CANCER_SUSCEPTIBLE_STATE_NAME}_TO_{DCIS_STATE_NAME}'),
+    TransitionString(f'{DCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
+    TransitionString(f'{LCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
 )
 
-# TODO - add all diseases to DISEASE_MODELS tuple and the DISEASE_MODEL_MAP dictionary
-DISEASE_MODELS = (DIARRHEA_MODEL_NAME)
+DISEASE_MODELS = (
+    BREAST_CANCER_MODEL_NAME,
+)
 DISEASE_MODEL_MAP = {
-    DIARRHEA_MODEL_NAME: {
-        'states': DIARRHEA_MODEL_STATES,
-        'transitions': DIARRHEA_MODEL_TRANSITIONS,
+    BREAST_CANCER_MODEL_NAME: {
+        'states': BREAST_CANCER_MODEL_STATES,
+        'transitions': BREAST_CANCER_MODEL_TRANSITIONS,
     },
 }
+
+STATES = tuple(state for model in DISEASE_MODELS for state in DISEASE_MODEL_MAP[model]['states'])
+TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in DISEASE_MODEL_MAP[model]['transitions'])
 
 
 ########################
@@ -171,14 +191,12 @@ AGE_GROUPS = ()
 # TODO - add causes of death
 CAUSES_OF_DEATH = (
     'other_causes',
-    DIARRHEA_WITH_CONDITION_STATE_NAME,
+    BREAST_CANCER_STATE_NAME,
 )
 # TODO - add causes of disability
 CAUSES_OF_DISABILITY = (
-    DIARRHEA_WITH_CONDITION_STATE_NAME,
+    BREAST_CANCER_STATE_NAME,
 )
-STATES = (state for model in DISEASE_MODELS for state in DISEASE_MODEL_MAP[model]['states'])
-TRANSITIONS = (transition for model in DISEASE_MODELS for transition in DISEASE_MODEL_MAP[model]['transitions'])
 
 TEMPLATE_FIELD_MAP = {
     'POP_STATE': POP_STATES,

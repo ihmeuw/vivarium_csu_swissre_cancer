@@ -1,0 +1,1 @@
+from vivarium_csu_swissre_cancer.components.disease import BreastCancer
