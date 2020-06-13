@@ -7,8 +7,8 @@ components:
             - DisabilityObserver()
             - MortalityObserver()
 
-    # Causes an error if left empty. Uncomment when you have components. 
-    # vivarium_csu_swissre_cancer.components:
+    vivarium_csu_swissre_cancer.components:
+        - BreastCancer()
 
 configuration:
     input_data:

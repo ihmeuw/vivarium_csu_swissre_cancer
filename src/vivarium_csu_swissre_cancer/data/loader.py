@@ -69,8 +69,6 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         project_globals.BREAST_CANCER.INCIDENCE_RATE: load_incidence_rate,
         project_globals.BREAST_CANCER.LCIS_BREAST_CANCER_TRANSITION_RATE: load_breast_cancer_transition_rate,
         project_globals.BREAST_CANCER.DCIS_BREAST_CANCER_TRANSITION_RATE: load_breast_cancer_transition_rate,
-        project_globals.BREAST_CANCER.LCIS_DISABILITY_WEIGHT: load_disability_weight,
-        project_globals.BREAST_CANCER.DCIS_DISABILITY_WEIGHT: load_disability_weight,
         project_globals.BREAST_CANCER.DISABILITY_WEIGHT: load_disability_weight,
         project_globals.BREAST_CANCER.EMR: load_emr,
         project_globals.BREAST_CANCER.CSMR: load_csmr,
