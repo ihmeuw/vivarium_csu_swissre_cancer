@@ -43,14 +43,18 @@ class ResultsStratifier:
             # 'pipeline_one': builder.value.get_value('pipeline_one'),
         }
         columns_required = [
-            # 'column_one',
+            'age',
         ]
         self.population_view = builder.population.get_view(columns_required)
+
+        def get_age_range_function(age_lower_bound):
+            return lambda: (
+                (age_lower_bound <= self.population_values['age'])
+                & (self.population_values['age'] < (age_lower_bound + 5))
+            )
+
         self.stratification_levels = {
-            # 'C1': {
-            #     'high': lambda: self.population_values['column_one'] > 0,
-            #     'low': lambda: self.population_values['column_one'] <= 0,
-            # },
+            'age_cohort': {f'{x}_{x + 5}': get_age_range_function(x) for x in range(15, 85, 5)},
             # 'P1': {
             #     'high': lambda: self.pipeline_values['pipeline_one'] > 5,
             #     'low': lambda: self.pipelines['pipeline_one'] <= 5,
