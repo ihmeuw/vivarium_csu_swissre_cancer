@@ -158,11 +158,18 @@ TOTAL_POPULATION_COLUMN = 'total_population'
 TOTAL_YLDS_COLUMN = 'years_lived_with_disability'
 TOTAL_YLLS_COLUMN = 'years_of_life_lost'
 
+# Columns from parallel runs
+INPUT_DRAW_COLUMN = 'input_draw'
+RANDOM_SEED_COLUMN = 'random_seed'
+OUTPUT_SCENARIO_COLUMN = 'ldlc_treatment_algorithm.scenario'
+
 STANDARD_COLUMNS = {
     'total_population': TOTAL_POPULATION_COLUMN,
     'total_ylls': TOTAL_YLLS_COLUMN,
     'total_ylds': TOTAL_YLDS_COLUMN,
 }
+
+THROWAWAY_COLUMNS = [f'{state}_event_count' for state in STATES]
 
 TOTAL_POPULATION_COLUMN_TEMPLATE = 'total_population_{POP_STATE}'
 PERSON_TIME_COLUMN_TEMPLATE = 'person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}'
@@ -181,6 +188,9 @@ COLUMN_TEMPLATES = {
     'state_person_time': STATE_PERSON_TIME_COLUMN_TEMPLATE,
     'transition_count': TRANSITION_COUNT_COLUMN_TEMPLATE,
 }
+
+NON_COUNT_TEMPLATES = [
+]
 
 POP_STATES = ('living', 'dead', 'tracked', 'untracked')
 SEXES = ('male', 'female')
