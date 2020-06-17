@@ -3,12 +3,12 @@ components:
         population:
             - BasePopulation()
             - Mortality()
-        metrics:
-            - DisabilityObserver()
-            - MortalityObserver()
 
     vivarium_csu_swissre_cancer.components:
         - BreastCancer()
+        - MortalityObserver()
+        - DisabilityObserver()
+        - DiseaseObserver('breast_cancer')
 
 configuration:
     input_data:
@@ -40,10 +40,10 @@ configuration:
 
     metrics:
         disability:
-            by_age: True
+            by_age: False
             by_sex: True
             by_year: True
         mortality:
-            by_age: True
+            by_age: False
             by_sex: True
             by_year: True
