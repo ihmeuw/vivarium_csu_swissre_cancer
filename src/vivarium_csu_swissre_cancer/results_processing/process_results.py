@@ -36,8 +36,6 @@ def make_measure_data(data):
         deaths=get_by_cause_measure_data(data, 'deaths'),
         state_person_time=get_state_person_time_measure_data(data),
         transition_count=get_transition_count_measure_data(data),
-        miscellaneous_person_time=get_measure_data(data, 'miscellaneous_person_time')
-
     )
     return measure_data
 
@@ -50,7 +48,6 @@ class MeasureData(NamedTuple):
     deaths: pd.DataFrame
     state_person_time: pd.DataFrame
     transition_count: pd.DataFrame
-    miscellaneous_person_time: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
@@ -64,7 +61,8 @@ def read_data(path: Path) -> (pd.DataFrame, List[str]):
     data = (data
             .drop(columns=data.columns.intersection(project_globals.THROWAWAY_COLUMNS))
             .reset_index(drop=True)
-            .rename(columns={project_globals.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
+            # TODO add back in when we have scenarios
+            # .rename(columns={project_globals.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
             )
     data[project_globals.INPUT_DRAW_COLUMN] = data[project_globals.INPUT_DRAW_COLUMN].astype(int)
     data[project_globals.RANDOM_SEED_COLUMN] = data[project_globals.RANDOM_SEED_COLUMN].astype(int)
@@ -79,10 +77,11 @@ def filter_out_incomplete(data, keyspace):
         # For each draw, gather all random seeds completed for all scenarios.
         random_seeds = set(keyspace[project_globals.RANDOM_SEED_COLUMN])
         draw_data = data.loc[data[project_globals.INPUT_DRAW_COLUMN] == draw]
-        for scenario in keyspace[project_globals.OUTPUT_SCENARIO_COLUMN]:
-            seeds_in_data = draw_data.loc[data[SCENARIO_COLUMN] == scenario,
-                                          project_globals.RANDOM_SEED_COLUMN].unique()
-            random_seeds = random_seeds.intersection(seeds_in_data)
+        # TODO add back in when we have scenarios
+        # for scenario in keyspace[project_globals.OUTPUT_SCENARIO_COLUMN]:
+        #     seeds_in_data = draw_data.loc[data[SCENARIO_COLUMN] == scenario,
+        #                                   project_globals.RANDOM_SEED_COLUMN].unique()
+        #     random_seeds = random_seeds.intersection(seeds_in_data)
         draw_data = draw_data.loc[draw_data[project_globals.RANDOM_SEED_COLUMN].isin(random_seeds)]
         output.append(draw_data)
     return pd.concat(output, ignore_index=True).reset_index(drop=True)
@@ -118,14 +117,10 @@ def sort_data(data):
 
 
 def split_processing_column(data):
-    data['process'], data['acs'] = data.process.str.split('_ACS_').str
-    data['process'], data['fpg'] = data.process.str.split('_FPG_').str
-    data['process'], data['sbp'] = data.process.str.split('_SBP_').str
-    data['process'], data['ldl'] = data.process.str.split('_LDL_').str
-
-    data['process'], data['age_group'] = data.process.str.split('_in_age_group_').str
+    data['process'], data['age_cohort'] = data.process.str.split('_age_cohort_').str
     data['process'], data['sex'] = data.process.str.split('_among_').str
-    data['measure'], data['year'] = data.process.str.split('_in_').str
+    data['year'] = data.process.str.split('_in_').str[-1]
+    data['measure'] = data.process.str.split('_in_').str[:-1].apply(lambda x: '_in_'.join(x))
     return data.drop(columns='process')
 
 
@@ -157,6 +152,6 @@ def get_state_person_time_measure_data(data):
 
 def get_transition_count_measure_data(data):
     # Oops, edge case.
-    data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2025' in c])
+    data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2040' in c])
     data = get_measure_data(data, 'transition_count')
     return sort_data(data)

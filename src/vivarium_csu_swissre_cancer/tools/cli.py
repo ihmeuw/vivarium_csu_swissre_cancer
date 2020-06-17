@@ -23,9 +23,8 @@ from vivarium.framework.utilities import handle_exceptions
 from vivarium_csu_swissre_cancer import paths
 import vivarium_csu_swissre_cancer.globals as project_globals
 
-from vivarium_csu_swissre_cancer.tools import configure_logging_to_terminal
-from vivarium_csu_swissre_cancer.tools import build_model_specifications
-from vivarium_csu_swissre_cancer.tools import build_artifacts
+from vivarium_csu_swissre_cancer.tools import (build_artifacts, build_model_specifications, build_results,
+                                               configure_logging_to_terminal)
 
 
 @click.command()
@@ -87,3 +86,17 @@ def make_artifacts(location: str, output_dir: str, append: bool, verbose: int, w
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
     main(location, output_dir, append, verbose)
+
+
+@click.command()
+@click.argument('output_file', type=click.Path(exists=True))
+@click.option('-v', 'verbose',
+              count=True,
+              help='Configure logging verbosity.')
+@click.option('--pdb', 'with_debugger',
+              is_flag=True,
+              help='Drop into python debugger if an error occurs.')
+def make_results(output_file: str, verbose: int, with_debugger: bool) -> None:
+    configure_logging_to_terminal(verbose)
+    main = handle_exceptions(build_results, logger, with_debugger=with_debugger)
+    main(output_file)

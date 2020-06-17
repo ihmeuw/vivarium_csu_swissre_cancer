@@ -62,7 +62,8 @@ if __name__ == "__main__":
 
         entry_points='''
             [console_scripts]
-            make_specs=vivarium_csu_swissre_cancer.tools.cli:make_specs
-            make_artifacts=vivarium_csu_swissre_cancer.tools.cli:make_artifacts
+            make-specs=vivarium_csu_swissre_cancer.tools.cli:make_specs
+            make-artifacts=vivarium_csu_swissre_cancer.tools.cli:make_artifacts
+            make-results=vivarium_csu_swissre_cancer.tools.cli:make_results
         '''
     )
