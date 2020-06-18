@@ -47,3 +47,7 @@ configuration:
             by_age: False
             by_sex: True
             by_year: True
+        breast_cancer_observer:
+            by_age: False
+            by_sex: True
+            by_year: True
