@@ -137,17 +137,45 @@ TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in DIS
 ########################
 # Risk Model Constants #
 ########################
-# TODO - remove if you don't need lbwsg
-LBWSG_MODEL_NAME = 'low_birth_weight_and_short_gestation'
 
 
-class __LBWSG_MISSING_CATEGORY(NamedTuple):
-    CAT: str = 'cat212'
-    NAME: str = 'Birth prevalence - [37, 38) wks, [1000, 1500) g'
-    EXPOSURE: float = 0.
+########################
+# Screening and Treatment Model Constants #
+########################
+
+class __ScreeningEfficacy(NamedTuple):
+    MAMMOGRAM_SENSITIVITY_MEAN: float = 0.848
+    MAMMOGRAM_SENSITIVITY_SD: float = MAMMOGRAM_SENSITIVITY_MEAN / 100
+    MRI_SENSITIVITY_MEAN: float = 0.91
+    MRI_SENSITIVITY_SD: float = MRI_SENSITIVITY_MEAN / 100
+    BREAST_ULTRASOUND_SENSITIVITY_MEAN: float = 0.737
+    BREAST_ULTRASOUND_SENSITIVITY_SD: float = BREAST_ULTRASOUND_SENSITIVITY_MEAN / 100
+    MAMMOGRAM_ULTRASOUND_SENSITIVITY_MEAN: float = 0.939
+    MAMMOGRAM_ULTRASOUND_SENSITIVITY_SD: float = MAMMOGRAM_ULTRASOUND_SENSITIVITY_MEAN / 100
+
+    MAMMOGRAM_SPECIFICITY_MEAN: float = 1.0
+    MAMMOGRAM_SPECIFICITY_SD: float = 0.0
+    MRI_SPECIFICITY_MEAN: float = 1.0
+    MRI_SPECIFICITY_SD: float = 0.0
+    BREAST_ULTRASOUND_SPECIFICITY_MEAN: float = 1.0
+    BREAST_ULTRASOUND_SPECIFICITY_SD: float = 0.0
+    MAMMOGRAM_ULTRASOUND_SPECIFICITY_MEAN: float = 1.0
+    MAMMOGRAM_ULTRASOUND_SPECIFICITY_SD: float = 0.0
 
 
-LBWSG_MISSING_CATEGORY = __LBWSG_MISSING_CATEGORY()
+SCREENING_EFFICACY = __ScreeningEfficacy()
+
+
+class __ScreeningAttendance(NamedTuple):
+    BASE_PROBABILITY_MEAN: float = 0.3
+    BASE_PROBABILITY_SD: float = BASE_PROBABILITY_MEAN / 100
+    PROBABILITY_GIVEN_ATTENDED_PREVIOUS_MEAN: float = 0.397
+    PROBABILITY_GIVEN_ATTENDED_PREVIOUS_SD: float = PROBABILITY_GIVEN_ATTENDED_PREVIOUS_MEAN / 100
+    PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_MEAN: float = 0.258
+    PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_SD: float = PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_MEAN / 100
+
+
+SCREENING_ATTENDANCE = __ScreeningAttendance()
 
 
 #################################
