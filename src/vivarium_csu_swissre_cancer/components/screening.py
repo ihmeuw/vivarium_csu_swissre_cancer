@@ -24,8 +24,6 @@ SEX = 'sex'
 class __Scenarios(NamedTuple):
     baseline: str = 'baseline'
     # TODO add scenarios
-    # guideline: str = 'guideline'
-    # guideline_and_new_treatment: str = 'guideline_and_new_treatment'
 
 
 SCENARIOS = __Scenarios()
@@ -40,18 +38,10 @@ class ScreeningAlgorithm:
         }
     }
 
-    # def __init__(self):
-    #     self.patient_profile = PatientProfile()
-
     @property
     def name(self) -> str:
         """The name of this component."""
         return SCREENING_SCENARIO
-
-    # @property
-    # def sub_components(self) -> List:
-    #     """The patient profile."""
-    #     return [self.patient_profile]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
@@ -91,10 +81,6 @@ class ScreeningAlgorithm:
         pop = self.population_view.subview([
             SEX,
             AGE,
-            project_globals.BREAST_CANCER_MODEL_NAME,
-            project_globals.SCREENING_RESULT,
-            project_globals.ATTENDED_LAST_SCREENING,
-            project_globals.NEXT_SCREENING_DATE,
         ]).get(pop_data.index)
 
         # TODO need to initialize this value properly - waiting on guidance from RT
@@ -114,7 +100,7 @@ class ScreeningAlgorithm:
         next_screening = pd.Series(pd.NaT, index=pop.index, name=project_globals.NEXT_SCREENING_DATE)
         next_screening[female_under_70] = self._schedule_screening(
             previous_screening[female_under_70],
-            pop[project_globals.SCREENING_RESULT][female_under_70],
+            screening_result[female_under_70],
             is_init=True
         )
 
@@ -138,18 +124,18 @@ class ScreeningAlgorithm:
 
         # Get all simulants who actually attended their screening
         attended_this_screening = self.randomness.get_draw(screening_scheduled.index) < p_attends_screening
-        attended_last_screening = pop[project_globals.ATTENDED_LAST_SCREENING]
+        attended_last_screening = pd.Series(pop[project_globals.ATTENDED_LAST_SCREENING])
         attended_last_screening[screening_scheduled_mask] = attended_this_screening
         attended_last_screening = attended_last_screening.astype(bool)
 
         # Screening results for everyone
-        screening_result = pop[project_globals.SCREENING_RESULT]
+        screening_result = pd.Series(pop[project_globals.SCREENING_RESULT])
         screening_result[screening_scheduled_mask][attended_this_screening] = self._do_screening(
             screening_scheduled[attended_this_screening]
         )
 
         # Next scheduled screening for everyone
-        next_screening = pop[project_globals.NEXT_SCREENING_DATE]
+        next_screening = pd.Series(pop[project_globals.NEXT_SCREENING_DATE])
         next_screening[screening_scheduled_mask] = self._schedule_screening(
             screening_scheduled[project_globals.NEXT_SCREENING_DATE],
             screening_result[screening_scheduled_mask]
@@ -212,7 +198,7 @@ class ScreeningAlgorithm:
                                   != pop[project_globals.SCREENING_RESULT]))
 
         # Screening results for everyone who was screened
-        screening_result = pop[project_globals.SCREENING_RESULT]
+        screening_result = pd.Series(pop[project_globals.SCREENING_RESULT])
         screening_result[new_true_positives] = (
             pop[project_globals.BREAST_CANCER_MODEL_NAME][new_true_positives]
         )
