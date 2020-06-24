@@ -1,6 +1,7 @@
 import itertools
-from pathlib import Path
-from typing import NamedTuple
+from typing import List, NamedTuple, Tuple
+
+from vivarium_csu_swissre_cancer.utilities import TruncnormDist
 
 ####################
 # Project metadata #
@@ -143,40 +144,33 @@ TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in DIS
 # Screening and Treatment Model Constants #
 ########################
 
-class __ScreeningEfficacy(NamedTuple):
-    MAMMOGRAM_SENSITIVITY_MEAN: float = 0.848
-    MAMMOGRAM_SENSITIVITY_SD: float = MAMMOGRAM_SENSITIVITY_MEAN / 100
-    MRI_SENSITIVITY_MEAN: float = 0.91
-    MRI_SENSITIVITY_SD: float = MRI_SENSITIVITY_MEAN / 100
-    BREAST_ULTRASOUND_SENSITIVITY_MEAN: float = 0.737
-    BREAST_ULTRASOUND_SENSITIVITY_SD: float = BREAST_ULTRASOUND_SENSITIVITY_MEAN / 100
-    MAMMOGRAM_ULTRASOUND_SENSITIVITY_MEAN: float = 0.939
-    MAMMOGRAM_ULTRASOUND_SENSITIVITY_SD: float = MAMMOGRAM_ULTRASOUND_SENSITIVITY_MEAN / 100
+class __Screening(NamedTuple):
+    MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
+    MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
+    
+    MRI_SENSITIVITY: TruncnormDist = TruncnormDist('mri_sensitivity', 0.91, 0.0091)
+    MRI_SPECIFICITY: TruncnormDist = TruncnormDist('mri_specificity', 1.0, 0.0)
+    
+    ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('ultrasound_sensitivity', 0.737, 0.00737)
+    ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('ultrasound_specificity', 1.0, 0.0)
 
-    MAMMOGRAM_SPECIFICITY_MEAN: float = 1.0
-    MAMMOGRAM_SPECIFICITY_SD: float = 0.0
-    MRI_SPECIFICITY_MEAN: float = 1.0
-    MRI_SPECIFICITY_SD: float = 0.0
-    BREAST_ULTRASOUND_SPECIFICITY_MEAN: float = 1.0
-    BREAST_ULTRASOUND_SPECIFICITY_SD: float = 0.0
-    MAMMOGRAM_ULTRASOUND_SPECIFICITY_MEAN: float = 1.0
-    MAMMOGRAM_ULTRASOUND_SPECIFICITY_SD: float = 0.0
+    MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
+    MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
+
+    BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
+    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_adherent', 0.397, 0.00397)
+    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_not_adherent', 0.258, 0.00258)
 
 
-SCREENING_EFFICACY = __ScreeningEfficacy()
+SCREENING = __Screening()
 
 
-class __ScreeningAttendance(NamedTuple):
-    BASE_PROBABILITY_MEAN: float = 0.3
-    BASE_PROBABILITY_SD: float = BASE_PROBABILITY_MEAN / 100
-    PROBABILITY_GIVEN_ATTENDED_PREVIOUS_MEAN: float = 0.397
-    PROBABILITY_GIVEN_ATTENDED_PREVIOUS_SD: float = PROBABILITY_GIVEN_ATTENDED_PREVIOUS_MEAN / 100
-    PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_MEAN: float = 0.258
-    PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_SD: float = PROBABILITY_GIVEN_NOT_ATTENDED_PREVIOUS_MEAN / 100
+DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
+DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)
 
-
-SCREENING_ATTENDANCE = __ScreeningAttendance()
-
+SCREENING_RESULT = 'screening_result'
+ATTENDED_LAST_SCREENING = 'attended_last_screening'
+NEXT_SCREENING_DATE = 'next_screening_date'
 
 #################################
 # Results columns and variables #

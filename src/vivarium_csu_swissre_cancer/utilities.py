@@ -1,26 +1,13 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm
-
-from vivarium_public_health.risks.data_transformations import pivot_categorical
-
-from vivarium_csu_swissre_cancer import globals as project_globals
+from vivarium.framework.randomness import get_hash
 
 
-class TruncnormParams:
-    def __init__(self, mean, sd, lower=0, upper=1):
-        self.a = (lower - mean) / sd if sd else mean
-        self.b = (upper - mean) / sd if sd else mean
-        self.loc = mean
-        self.scale = sd
-
-
-def sample_truncnorm_distribution(seed: int, mean: float, sd: float, lower: float = 0.0, upper: float = 1.0) -> float:
-    """Gets a single random draw from a truncated normal distribution.
+class TruncnormDist:
+    """Defines an instance of a truncated normal distribution.
     Parameters
     ----------
-    seed
-        Seed for the random number generator.
     mean
         mean of truncnorm distribution
     sd
@@ -31,15 +18,36 @@ def sample_truncnorm_distribution(seed: int, mean: float, sd: float, lower: floa
         upper bound of truncnorm distribution
     Returns
     -------
-        The random variate from the truncated normal distribution.
+        An object with parameters for scipy.stats.truncnorm
     """
-    # Handle degenerate distribution
-    if not sd:
-        return mean
+    def __init__(self, name, mean, sd, lower=0, upper=1):
+        self.name = name
+        self.a = (lower - mean) / sd if sd else 0
+        self.b = (upper - mean) / sd if sd else 0
+        self.loc = mean
+        self.scale = sd
+        
+    def sample_screening_parameter(self, draw: int) -> float:
+        """Gets a single random draw from a truncated normal distribution.
+        Parameters
+        ----------
+        draw
+            Draw for this simulation
+        params
+            TruncnorParams object with parameters for truncated normal distribution
+        Returns
+        -------
+            The random variate from the truncated normal distribution.
+        """
+        # Handle degenerate distribution
+        if not self.scale:
+            return self.loc
+    
+        np.random.seed(get_hash(f'{self.name}_draw_{draw}'))
+        return truncnorm.rvs(self.a, self.b, self.loc, self.scale)
 
-    np.random.seed(seed)
-    params = TruncnormParams(mean, sd, lower, upper)
-    return truncnorm.rvs(params.a, params.b, params.loc, params.scale)
+    def get_draw(self, quantiles: pd.Series) -> pd.Series:
+        return truncnorm(self.a, self.b, self.loc, self.scale).ppf(quantiles)
 
 
 def sanitize_location(location: str):
