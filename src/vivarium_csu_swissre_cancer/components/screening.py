@@ -53,12 +53,12 @@ class ScreeningAlgorithm:
             The simulation builder object.
 
         """
-        self.draw = builder.configuration.input_data.input_draw_number
         self.clock = builder.time.clock()
         self.step_size = builder.time.step_size()
         self.randomness = builder.randomness.get_stream(self.name)
 
-        self.screening_parameters = {parameter.name: parameter.sample_screening_parameter(self.draw)
+        draw = builder.configuration.input_data.input_draw_number
+        self.screening_parameters = {parameter.name: parameter.get_random_variable(draw)
                                      for parameter in project_globals.SCREENING}
 
         required_columns = [AGE, SEX, project_globals.BREAST_CANCER_MODEL_NAME]

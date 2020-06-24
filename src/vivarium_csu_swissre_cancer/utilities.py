@@ -27,7 +27,7 @@ class TruncnormDist:
         self.loc = mean
         self.scale = sd
         
-    def sample_screening_parameter(self, draw: int) -> float:
+    def get_random_variable(self, draw: int) -> float:
         """Gets a single random draw from a truncated normal distribution.
         Parameters
         ----------
