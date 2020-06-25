@@ -165,7 +165,7 @@ class ScreeningAlgorithm:
                                                                     project_globals.LCIS_STATE_NAME])
         mri = family_history & (30 <= pop[AGE]) & (pop[AGE] < 70)
         ultrasound = ~family_history & has_dcis_lcis & (30 <= pop[AGE]) & (pop[AGE] < 45)
-        mammogram_ultrasound = (~family_history & has_dcis_lcis & (45 <= pop[AGE]) & (pop[AGE] < 70))
+        mammogram_ultrasound = ~family_history & has_dcis_lcis & (45 <= pop[AGE]) & (pop[AGE] < 70)
         mammogram = ~family_history & ~has_dcis_lcis & (30 <= pop[AGE]) & (pop[AGE] < 70)
 
         # Get sensitivity values for all individuals
@@ -178,31 +178,16 @@ class ScreeningAlgorithm:
         ]
         sensitivity[mammogram] = self.screening_parameters[project_globals.SCREENING.MAMMOGRAM_SENSITIVITY.name]
 
-        # Get sensitivity and specificity values for all individuals
-        # TODO address different specificity values for tests of different conditions
-        specificity = pd.Series(1.0, index=pop.index)
-        specificity[mri] = self.screening_parameters[project_globals.SCREENING.MRI_SPECIFICITY.name]
-        specificity[ultrasound] = self.screening_parameters[project_globals.SCREENING.ULTRASOUND_SPECIFICITY.name]
-        specificity[mammogram_ultrasound] = self.screening_parameters[
-            project_globals.SCREENING.MAMMOGRAM_ULTRASOUND_SPECIFICITY.name
-        ]
-        specificity[mammogram] = self.screening_parameters[project_globals.SCREENING.MAMMOGRAM_SPECIFICITY.name]
+        # TODO add in specificity if the specificity ever changes from 100%
 
         # Perform screening on those who attended screening
-        new_true_positives = ((self.randomness.get_draw(pop.index) < sensitivity)
-                              & (pop[project_globals.BREAST_CANCER_MODEL_NAME]
-                                 != pop[project_globals.SCREENING_RESULT]))
-
-        new_false_positives = ((self.randomness.get_draw(pop.index) >= sensitivity)
-                               & (pop[project_globals.BREAST_CANCER_MODEL_NAME]
-                                  != pop[project_globals.SCREENING_RESULT]))
+        accurate_results = self.randomness.get_draw(pop.index) < sensitivity
 
         # Screening results for everyone who was screened
         screening_result = pd.Series(pop[project_globals.SCREENING_RESULT])
-        screening_result[new_true_positives] = (
-            pop[project_globals.BREAST_CANCER_MODEL_NAME][new_true_positives]
+        screening_result[accurate_results] = (
+            pop[project_globals.BREAST_CANCER_MODEL_NAME][accurate_results]
         )
-        screening_result[new_false_positives] = project_globals.BREAST_CANCER_STATE_NAME
         return screening_result
 
     def _schedule_screening(self, previous_screening: pd.Series, screening_result: pd.Series,

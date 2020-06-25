@@ -158,8 +158,8 @@ class __Screening(NamedTuple):
     MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
 
     BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
-    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_adherent', 0.397, 0.00397)
-    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_not_adherent', 0.258, 0.00258)
+    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.397, 0.00397)
+    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.258, 0.00258)
 
 
 SCREENING = __Screening()
