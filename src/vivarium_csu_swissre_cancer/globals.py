@@ -1,5 +1,5 @@
 import itertools
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple
 
 from vivarium_csu_swissre_cancer.utilities import TruncnormDist
 

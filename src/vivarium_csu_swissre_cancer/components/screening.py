@@ -69,7 +69,8 @@ class ScreeningAlgorithm:
         ]
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=columns_created,
-                                                 requires_columns=required_columns)
+                                                 requires_columns=[col for col in required_columns
+                                                                   if col != project_globals.BREAST_CANCER_MODEL_NAME])
         self.population_view = builder.population.get_view(required_columns + columns_created)
 
         builder.event.register_listener('time_step',
@@ -123,15 +124,15 @@ class ScreeningAlgorithm:
         p_attends_screening = self._get_screening_attendance_probability(screening_scheduled)
 
         # Get all simulants who actually attended their screening
-        attended_this_screening = self.randomness.get_draw(screening_scheduled.index) < p_attends_screening
+        attends_screening = self.randomness.get_draw(screening_scheduled.index, 'attendance') < p_attends_screening
         attended_last_screening = pd.Series(pop[project_globals.ATTENDED_LAST_SCREENING])
-        attended_last_screening[screening_scheduled_mask] = attended_this_screening
+        attended_last_screening[screening_scheduled_mask] = attends_screening
         attended_last_screening = attended_last_screening.astype(bool)
 
         # Screening results for everyone
         screening_result = pd.Series(pop[project_globals.SCREENING_RESULT])
-        screening_result[screening_scheduled_mask][attended_this_screening] = self._do_screening(
-            screening_scheduled[attended_this_screening]
+        screening_result[screening_scheduled_mask][attends_screening] = self._do_screening(
+            screening_scheduled[attends_screening]
         )
 
         # Next scheduled screening for everyone
@@ -181,7 +182,7 @@ class ScreeningAlgorithm:
         # TODO add in specificity if the specificity ever changes from 100%
 
         # Perform screening on those who attended screening
-        accurate_results = self.randomness.get_draw(pop.index) < sensitivity
+        accurate_results = self.randomness.get_draw(pop.index, 'sensitivity') < sensitivity
 
         # Screening results for everyone who was screened
         screening_result = pd.Series(pop[project_globals.SCREENING_RESULT])
