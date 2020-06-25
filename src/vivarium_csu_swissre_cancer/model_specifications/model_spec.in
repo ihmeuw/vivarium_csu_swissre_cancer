@@ -6,6 +6,8 @@ components:
 
     vivarium_csu_swissre_cancer.components:
         - BreastCancer()
+        - ScreeningAlgorithm()
+
         - MortalityObserver()
         - DisabilityObserver()
         - DiseaseObserver('breast_cancer')
@@ -14,7 +16,7 @@ configuration:
     input_data:
         location: {{ location_proper }}
         input_draw_number: 0
-        artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_cancer/{{ location_sanitized }}.hdf
+        artifact_path: {{ artifact_directory }}/{{ location_sanitized }}.hdf
     interpolation:
         order: 0
         # TODO change to False once we have data for all dates
@@ -37,6 +39,9 @@ configuration:
         population_size: 100000
         age_start: 15
         age_end: 95
+
+    screening_algorithm:
+        scenario: 'baseline'
 
     metrics:
         disability:

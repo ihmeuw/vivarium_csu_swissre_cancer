@@ -1,6 +1,7 @@
 import itertools
-from pathlib import Path
 from typing import NamedTuple
+
+from vivarium_csu_swissre_cancer.utilities import TruncnormDist
 
 ####################
 # Project metadata #
@@ -137,18 +138,39 @@ TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in DIS
 ########################
 # Risk Model Constants #
 ########################
-# TODO - remove if you don't need lbwsg
-LBWSG_MODEL_NAME = 'low_birth_weight_and_short_gestation'
 
 
-class __LBWSG_MISSING_CATEGORY(NamedTuple):
-    CAT: str = 'cat212'
-    NAME: str = 'Birth prevalence - [37, 38) wks, [1000, 1500) g'
-    EXPOSURE: float = 0.
+########################
+# Screening and Treatment Model Constants #
+########################
+
+class __Screening(NamedTuple):
+    MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
+    MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
+    
+    MRI_SENSITIVITY: TruncnormDist = TruncnormDist('mri_sensitivity', 0.91, 0.0091)
+    MRI_SPECIFICITY: TruncnormDist = TruncnormDist('mri_specificity', 1.0, 0.0)
+    
+    ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('ultrasound_sensitivity', 0.737, 0.00737)
+    ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('ultrasound_specificity', 1.0, 0.0)
+
+    MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
+    MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
+
+    BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
+    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.397, 0.00397)
+    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.258, 0.00258)
 
 
-LBWSG_MISSING_CATEGORY = __LBWSG_MISSING_CATEGORY()
+SCREENING = __Screening()
 
+
+DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
+DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)
+
+SCREENING_RESULT = 'screening_result'
+ATTENDED_LAST_SCREENING = 'attended_last_screening'
+NEXT_SCREENING_DATE = 'next_screening_date'
 
 #################################
 # Results columns and variables #
