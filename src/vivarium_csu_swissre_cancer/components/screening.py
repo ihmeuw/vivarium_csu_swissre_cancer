@@ -65,6 +65,7 @@ class ScreeningAlgorithm:
         columns_created = [
             project_globals.SCREENING_RESULT,
             project_globals.ATTENDED_LAST_SCREENING,
+            project_globals.PREVIOUS_SCREENING_DATE,
             project_globals.NEXT_SCREENING_DATE,
         ]
         builder.population.initializes_simulants(self.on_initialize_simulants,
@@ -85,32 +86,43 @@ class ScreeningAlgorithm:
         ]).get(pop_data.index)
 
         # TODO need to initialize this value properly - waiting on guidance from RT
-        screening_result = pd.Series(project_globals.BREAST_CANCER_SUSCEPTIBLE_STATE_NAME,
+        screening_result = pd.Series(project_globals.SUSCEPTIBLE_STATE_NAME,
                                      index=pop.index,
                                      name=project_globals.SCREENING_RESULT)
 
-        female_under_30 = (pop[SEX] == 'Female') & (pop[AGE] < 30)
-        female_under_70 = (pop[SEX] == 'Female') & (pop[AGE] < 70)
+        female_under_30 = (pop.loc[:, SEX] == 'Female') & (pop.loc[:, AGE] < 30)
+        female_under_70 = (pop.loc[:, SEX] == 'Female') & (pop.loc[:, AGE] < 70)
 
-        previous_screening = pd.Series(self.clock(), index=pop.index)
-        previous_screening[female_under_30] = (
-                previous_screening[female_under_30]
-                + pd.to_timedelta(30 - pop.loc[female_under_30, AGE], unit='Y')
+        # Get beginning time for screening of all individuals
+        #  - never for men and women over 70
+        #  - beginning of sim for women between 30 & 70
+        #  - 30th birthday for women younger than 30
+        screening_start = pd.Series(pd.NaT, index=pop.index)
+        screening_start.loc[~female_under_30 & female_under_70] = self.clock()
+        screening_start.loc[female_under_30] = (
+                screening_start[female_under_30] + pd.to_timedelta(30 - pop.loc[female_under_30, AGE], unit='Y')
         )
 
-        next_screening = pd.Series(pd.NaT, index=pop.index, name=project_globals.NEXT_SCREENING_DATE)
-        next_screening[female_under_70] = self._schedule_screening(
-            previous_screening[female_under_70],
-            screening_result[female_under_70],
-            is_init=True
-        )
+        # Draw a duration between screenings to use for scheduling the first screening
+        time_between_screenings = screening_start - self._schedule_screening(screening_start, screening_result)
 
-        attended_last_screening = (self.randomness.get_draw(pop.index, 'attended_previous')
-                                   < self.screening_parameters[project_globals.SCREENING.BASE_PROBABILITY.name])
-        attended_last_screening.name = project_globals.ATTENDED_LAST_SCREENING
+        # Determine how far along between screenings we are the time screening starts
+        progress_to_next_screening = self.randomness.get_draw(pop.index, 'progress_to_next_screening')
+
+        # Get previous screening date for use in calculating next screening date
+        previous_screening = pd.Series(screening_start - progress_to_next_screening * time_between_screenings,
+                                       name=project_globals.PREVIOUS_SCREENING_DATE)
+        next_screening = pd.Series(previous_screening + time_between_screenings,
+                                   name=project_globals.NEXT_SCREENING_DATE)
+        # Remove the "appointment" used to determine the first appointment after turning 30
+        previous_screening.loc[female_under_30] = pd.NaT
+
+        attended_previous = pd.Series(self.randomness.get_draw(pop.index, 'attended_previous')
+                                      < self.screening_parameters[project_globals.SCREENING.BASE_PROBABILITY.name],
+                                      name=project_globals.ATTENDED_LAST_SCREENING)
 
         self.population_view.update(
-            pd.concat([screening_result, next_screening, attended_last_screening], axis=1)
+            pd.concat([screening_result, previous_screening, next_screening, attended_previous], axis=1)
         )
 
     def on_time_step(self, event: 'Event'):

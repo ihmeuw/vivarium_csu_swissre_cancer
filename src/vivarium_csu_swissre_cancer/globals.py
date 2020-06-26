@@ -104,19 +104,19 @@ class TransitionString(str):
 
 
 BREAST_CANCER_MODEL_NAME = BREAST_CANCER.name
-BREAST_CANCER_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{BREAST_CANCER_MODEL_NAME}'
+SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{BREAST_CANCER_MODEL_NAME}'
 LCIS_STATE_NAME = 'lobular_carcinoma_in_situ'
 DCIS_STATE_NAME = 'ductal_carcinoma_in_situ'
 BREAST_CANCER_STATE_NAME = 'breast_cancer'
 BREAST_CANCER_MODEL_STATES = (
-    BREAST_CANCER_SUSCEPTIBLE_STATE_NAME,
+    SUSCEPTIBLE_STATE_NAME,
     LCIS_STATE_NAME,
     DCIS_STATE_NAME,
     BREAST_CANCER_STATE_NAME
 )
 BREAST_CANCER_MODEL_TRANSITIONS = (
-    TransitionString(f'{BREAST_CANCER_SUSCEPTIBLE_STATE_NAME}_TO_{LCIS_STATE_NAME}'),
-    TransitionString(f'{BREAST_CANCER_SUSCEPTIBLE_STATE_NAME}_TO_{DCIS_STATE_NAME}'),
+    TransitionString(f'{SUSCEPTIBLE_STATE_NAME}_TO_{LCIS_STATE_NAME}'),
+    TransitionString(f'{SUSCEPTIBLE_STATE_NAME}_TO_{DCIS_STATE_NAME}'),
     TransitionString(f'{DCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
     TransitionString(f'{LCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
 )
@@ -170,6 +170,7 @@ DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.
 
 SCREENING_RESULT = 'screening_result'
 ATTENDED_LAST_SCREENING = 'attended_last_screening'
+PREVIOUS_SCREENING_DATE = 'previous_screening_date'
 NEXT_SCREENING_DATE = 'next_screening_date'
 
 #################################
