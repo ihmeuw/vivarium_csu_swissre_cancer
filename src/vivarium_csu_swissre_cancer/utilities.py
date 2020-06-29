@@ -24,8 +24,8 @@ class TruncnormDist:
         self.name = name
         self.a = (lower - mean) / sd if sd else 0
         self.b = (upper - mean) / sd if sd else 0
-        self.loc = mean
-        self.scale = sd
+        self.mean = mean
+        self.sd = sd
         
     def get_random_variable(self, draw: int) -> float:
         """Gets a single random draw from a truncated normal distribution.
@@ -40,14 +40,14 @@ class TruncnormDist:
             The random variate from the truncated normal distribution.
         """
         # Handle degenerate distribution
-        if not self.scale:
-            return self.loc
+        if not self.sd:
+            return self.mean
     
         np.random.seed(get_hash(f'{self.name}_draw_{draw}'))
-        return truncnorm.rvs(self.a, self.b, self.loc, self.scale)
+        return truncnorm.rvs(self.a, self.b, self.mean, self.sd)
 
-    def get_draw(self, quantiles: pd.Series) -> pd.Series:
-        return truncnorm(self.a, self.b, self.loc, self.scale).ppf(quantiles)
+    def ppf(self, quantiles: pd.Series) -> pd.Series:
+        return truncnorm(self.a, self.b, self.mean, self.sd).ppf(quantiles)
 
 
 def sanitize_location(location: str):
