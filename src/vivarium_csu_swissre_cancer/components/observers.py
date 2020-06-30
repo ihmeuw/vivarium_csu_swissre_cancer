@@ -10,10 +10,9 @@ from vivarium_public_health.metrics.utilities import (get_output_template, get_g
                                                       QueryString, to_years, get_person_time,
                                                       get_deaths, get_years_of_life_lost,
                                                       get_years_lived_with_disability, get_age_bins,
-                                                      get_age_sex_filter_and_iterables)
+                                                      )
 
-from vivarium_csu_swissre_cancer import globals as project_globals, paths
-from vivarium_csu_swissre_cancer.components.disease import BreastCancer
+from vivarium_csu_swissre_cancer import globals as project_globals
 
 if typing.TYPE_CHECKING:
     from vivarium.framework.engine import Builder
@@ -224,7 +223,7 @@ class DiseaseObserver:
     """Observes transition counts and person time for a cause."""
     configuration_defaults = {
         'metrics': {
-            'disease_observer': {
+            'disease': {
                 'by_age': False,
                 'by_year': False,
                 'by_sex': False,
@@ -235,13 +234,13 @@ class DiseaseObserver:
     def __init__(self, disease: str):
         self.disease = disease
         self.configuration_defaults = {
-            'metrics': {f'{disease}_observer': DiseaseObserver.configuration_defaults['metrics']['disease_observer']}
+            'metrics': {disease: DiseaseObserver.configuration_defaults['metrics']['disease']}
         }
         self.stratifier = ResultsStratifier(self.name)
 
     @property
     def name(self) -> str:
-        return f'disease_observer.{self.disease}'
+        return f'{self.disease}_observer'
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -249,14 +248,14 @@ class DiseaseObserver:
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
-        self.config = builder.configuration['metrics'][f'{self.disease}_observer'].to_dict()
+        self.config = builder.configuration['metrics'][self.disease].to_dict()
         self.clock = builder.time.clock()
         self.age_bins = get_age_bins(builder)
         self.counts = Counter()
         self.person_time = Counter()
 
-        self.states = project_globals.DISEASE_MODEL_MAP[self.disease]['states']
-        self.transitions = project_globals.DISEASE_MODEL_MAP[self.disease]['transitions']
+        self.states = project_globals.STATE_MACHINE_MAP[self.disease]['states']
+        self.transitions = project_globals.STATE_MACHINE_MAP[self.disease]['transitions']
 
         self.previous_state_column = f'previous_{self.disease}'
         builder.population.initializes_simulants(self.on_initialize_simulants,
