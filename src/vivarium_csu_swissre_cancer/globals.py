@@ -89,8 +89,49 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     BREAST_CANCER
 ]
 
+
+########################
+# Screening and Treatment Model Constants #
+########################
+
+class __Screening(NamedTuple):
+    MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
+    MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
+
+    MRI_SENSITIVITY: TruncnormDist = TruncnormDist('mri_sensitivity', 0.91, 0.0091)
+    MRI_SPECIFICITY: TruncnormDist = TruncnormDist('mri_specificity', 1.0, 0.0)
+
+    ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('ultrasound_sensitivity', 0.737, 0.00737)
+    ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('ultrasound_specificity', 1.0, 0.0)
+
+    MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
+    MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
+
+    BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
+    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.397, 0.00397)
+    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.258, 0.00258)
+
+    @property
+    def name(self):
+        return 'screening_result'
+
+    @property
+    def log_name(self):
+        return 'screening result'
+
+
+SCREENING = __Screening()
+
+
+DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
+DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)
+
+ATTENDED_LAST_SCREENING = 'attended_last_screening'
+PREVIOUS_SCREENING_DATE = 'previous_screening_date'
+NEXT_SCREENING_DATE = 'next_screening_date'
+
 ###########################
-# Disease Model variables #
+# State Machine Model variables #
 ###########################
 
 
@@ -121,57 +162,61 @@ BREAST_CANCER_MODEL_TRANSITIONS = (
     TransitionString(f'{LCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
 )
 
+
+SCREENING_RESULT_MODEL_NAME = SCREENING.name
+NEGATIVE_STATE_NAME = 'negative_screening'
+POSITIVE_LCIS_STATE_NAME = 'positive_screening_lobular_carcinoma_in_situ'
+POSITIVE_DCIS_STATE_NAME = 'positive_screening_ductal_carcinoma_in_situ'
+POSITIVE_BREAST_CANCER_STATE_NAME = 'positive_screening_breast_cancer'
+SCREENING_MODEL_STATES = (
+    NEGATIVE_STATE_NAME,
+    POSITIVE_LCIS_STATE_NAME,
+    POSITIVE_DCIS_STATE_NAME,
+    POSITIVE_BREAST_CANCER_STATE_NAME,
+)
+SCREENING_MODEL_TRANSITIONS = (
+    TransitionString(f'{NEGATIVE_STATE_NAME}_TO_{POSITIVE_LCIS_STATE_NAME}'),
+    TransitionString(f'{NEGATIVE_STATE_NAME}_TO_{POSITIVE_DCIS_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_DCIS_STATE_NAME}_TO_{POSITIVE_BREAST_CANCER_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_LCIS_STATE_NAME}_TO_{POSITIVE_BREAST_CANCER_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{NEGATIVE_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{NEGATIVE_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{POSITIVE_LCIS_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{POSITIVE_DCIS_STATE_NAME}'),
+)
+
 DISEASE_MODELS = (
     BREAST_CANCER_MODEL_NAME,
 )
-DISEASE_MODEL_MAP = {
+STATE_MACHINE_MAP = {
     BREAST_CANCER_MODEL_NAME: {
         'states': BREAST_CANCER_MODEL_STATES,
         'transitions': BREAST_CANCER_MODEL_TRANSITIONS,
     },
+    SCREENING_RESULT_MODEL_NAME: {
+        'states': SCREENING_MODEL_STATES,
+        'transitions': SCREENING_MODEL_TRANSITIONS,
+    }
 }
 
-STATES = tuple(state for model in DISEASE_MODELS for state in DISEASE_MODEL_MAP[model]['states'])
-TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in DISEASE_MODEL_MAP[model]['transitions'])
+
+def get_screened_state(breast_cancer_model_state: str) -> str:
+    """Get screening result state name from a breast cancer model state"""
+    return {
+        SUSCEPTIBLE_STATE_NAME: NEGATIVE_STATE_NAME,
+        LCIS_STATE_NAME: POSITIVE_LCIS_STATE_NAME,
+        DCIS_STATE_NAME: POSITIVE_DCIS_STATE_NAME,
+        BREAST_CANCER_STATE_NAME: POSITIVE_BREAST_CANCER_STATE_NAME,
+    }[breast_cancer_model_state]
+
+
+STATES = tuple(state for model in DISEASE_MODELS for state in STATE_MACHINE_MAP[model]['states'])
+TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in STATE_MACHINE_MAP[model]['transitions'])
 
 
 ########################
 # Risk Model Constants #
 ########################
-
-
-########################
-# Screening and Treatment Model Constants #
-########################
-
-class __Screening(NamedTuple):
-    MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
-    MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
-    
-    MRI_SENSITIVITY: TruncnormDist = TruncnormDist('mri_sensitivity', 0.91, 0.0091)
-    MRI_SPECIFICITY: TruncnormDist = TruncnormDist('mri_specificity', 1.0, 0.0)
-    
-    ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('ultrasound_sensitivity', 0.737, 0.00737)
-    ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('ultrasound_specificity', 1.0, 0.0)
-
-    MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
-    MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
-
-    BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
-    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.397, 0.00397)
-    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.258, 0.00258)
-
-
-SCREENING = __Screening()
-
-
-DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
-DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)
-
-SCREENING_RESULT = 'screening_result'
-ATTENDED_LAST_SCREENING = 'attended_last_screening'
-PREVIOUS_SCREENING_DATE = 'previous_screening_date'
-NEXT_SCREENING_DATE = 'next_screening_date'
 
 #################################
 # Results columns and variables #
