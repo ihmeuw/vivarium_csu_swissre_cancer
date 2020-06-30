@@ -57,8 +57,6 @@ POPULATION = __Population()
 
 
 class __BreastCancer(NamedTuple):
-    LCIS_PREVALENCE_RATIO: str = 'sequela.lobular_carcinoma_in_situ.prevalence_ratio'
-    DCIS_PREVALENCE_RATIO: str = 'sequela.ductal_carcinoma_in_situ.prevalence_ratio'
     LCIS_PREVALENCE: str = 'sequela.lobular_carcinoma_in_situ.prevalence'
     DCIS_PREVALENCE: str = 'sequela.ductal_carcinoma_in_situ.prevalence'
     PREVALENCE: str = 'cause.breast_cancer.prevalence'
@@ -71,6 +69,9 @@ class __BreastCancer(NamedTuple):
     EMR: str = 'cause.breast_cancer.excess_mortality_rate'
     CSMR: str = 'cause.breast_cancer.cause_specific_mortality_rate'
     RESTRICTIONS: str = 'cause.breast_cancer.restrictions'
+
+    LCIS_PREVALENCE_RATIO = 'sequela.lobular_carcinoma_in_situ.prevalence_ratio'
+    DCIS_PREVALENCE_RATIO = 'sequela.ductal_carcinoma_in_situ.prevalence_ratio'
 
     @property
     def name(self):
