@@ -227,7 +227,7 @@ def load_csmr(key: str, location: str):
 
 def _get_prevalence_ratio(key: str, location: str) -> float:
     random.seed(get_hash(f'{location}_{key}'))
-    random_values = [random.random() for _ in range(1000)]
+    random_values = np.random.random(1000)
     return PREVALENCE_RATIOS[key].ppf(random_values).tolist()
 
 
