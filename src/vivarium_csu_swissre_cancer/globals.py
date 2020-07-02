@@ -1,3 +1,4 @@
+from datetime import datetime
 import itertools
 from typing import NamedTuple
 
@@ -28,6 +29,18 @@ SWISSRE_LOCATION_WEIGHTS = {
     'Henan': 0.17,
     'Heilongjiang': 0.16,
 }
+
+
+#############
+# Scenarios #
+#############
+
+class __Scenarios(NamedTuple):
+    baseline: str = 'baseline'
+    alternative: str = 'alternative'
+
+
+SCENARIOS = __Scenarios()
 
 
 #############
@@ -95,6 +108,14 @@ MAKE_ARTIFACT_KEY_GROUPS = [
 # Screening and Treatment Model Constants #
 ########################
 
+PROBABILITY_ATTENDING_SCREENING_KEY = 'probability_attending_screening'
+ATTENDED_PREVIOUS_SCREENING_MULTIPLIER = 1.89
+RAMP_UP_START = datetime(2020, 1, 1)
+RAMP_UP_END = datetime(2030, 1, 1)
+SCREENING_ATTENDANCE_PROBABILITY_START = 0.30
+SCREENING_ATTENDANCE_PROBABILITY_END = 0.75
+
+
 class __Screening(NamedTuple):
     MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
     MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
@@ -108,9 +129,18 @@ class __Screening(NamedTuple):
     MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
     MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
 
-    BASE_PROBABILITY: TruncnormDist = TruncnormDist('probability_attending_screening', 0.3, 0.003)
-    PROBABILITY_GIVEN_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.397, 0.00397)
-    PROBABILITY_GIVEN_NOT_ADHERENT: TruncnormDist = TruncnormDist('probability_attending_screening', 0.258, 0.00258)
+    BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base',
+                                                   SCREENING_ATTENDANCE_PROBABILITY_START,
+                                                   SCREENING_ATTENDANCE_PROBABILITY_START / 100,
+                                                   key=PROBABILITY_ATTENDING_SCREENING_KEY)
+    START_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_attended_prev', 0.397, 0.00397,
+                                                                  key=PROBABILITY_ATTENDING_SCREENING_KEY)
+    START_NOT_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_not_attended_prev', 0.258,
+                                                                      0.00258, key=PROBABILITY_ATTENDING_SCREENING_KEY)
+    END_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('end_attendance_attended_prev', 0.782, 0.00782,
+                                                                key=PROBABILITY_ATTENDING_SCREENING_KEY)
+    END_NOT_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('end_attendance_not_attended_prev', 0.655, 0.00655,
+                                                                    key=PROBABILITY_ATTENDING_SCREENING_KEY)
 
     @property
     def name(self):
@@ -297,4 +327,3 @@ def RESULT_COLUMNS(kind='all'):
         for value_group in value_groups:
             columns.append(template.format(**{field: value for field, value in zip(fields, value_group)}))
     return columns
-

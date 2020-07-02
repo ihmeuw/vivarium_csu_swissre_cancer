@@ -1,6 +1,5 @@
 """Healthcare utilization and treatment model."""
 import typing
-from typing import NamedTuple
 
 import pandas as pd
 
@@ -13,34 +12,24 @@ if typing.TYPE_CHECKING:
     from vivarium.framework.population import SimulantData
 
 
-SCREENING_SCENARIO = 'screening_algorithm'
-
 # Columns
 AGE = 'age'
 SEX = 'sex'
-
-
-class __Scenarios(NamedTuple):
-    baseline: str = 'baseline'
-    # TODO add scenarios
-
-
-SCENARIOS = __Scenarios()
 
 
 class ScreeningAlgorithm:
     """Manages screening."""
 
     configuration_defaults = {
-        SCREENING_SCENARIO: {
-            'scenario': SCENARIOS.baseline
+        'screening_algorithm': {
+            'scenario': project_globals.SCENARIOS.baseline
         }
     }
 
     @property
     def name(self) -> str:
         """The name of this component."""
-        return SCREENING_SCENARIO
+        return 'screening_algorithm'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
@@ -52,6 +41,7 @@ class ScreeningAlgorithm:
             The simulation builder object.
 
         """
+        self.scenario = builder.configuration.screening_algorithm.scenario
         self.clock = builder.time.clock()
         self.step_size = builder.time.step_size()
         self.randomness = builder.randomness.get_stream(self.name)
@@ -117,7 +107,7 @@ class ScreeningAlgorithm:
         previous_screening.loc[female_under_30] = pd.NaT
 
         attended_previous = pd.Series(self.randomness.get_draw(pop.index, 'attended_previous')
-                                      < self.screening_parameters[project_globals.SCREENING.BASE_PROBABILITY.name],
+                                      < self.screening_parameters[project_globals.SCREENING.BASE_ATTENDANCE.name],
                                       name=project_globals.ATTENDED_LAST_SCREENING)
 
         self.population_view.update(
@@ -159,15 +149,39 @@ class ScreeningAlgorithm:
             pd.concat([screening_result, next_screening, attended_last_screening], axis=1)
         )
 
-    def _get_screening_attendance_probability(self, pop):
-        p_attends_screening = pd.Series(
-            self.screening_parameters[project_globals.SCREENING.PROBABILITY_GIVEN_NOT_ADHERENT.name],
-            index=pop.index
-        )
-        p_attends_screening.loc[pop.loc[:, project_globals.ATTENDED_LAST_SCREENING]] = (
-            self.screening_parameters[project_globals.SCREENING.PROBABILITY_GIVEN_ADHERENT.name]
-        )
-        return p_attends_screening
+    def _get_screening_attendance_probability(self, pop: pd.DataFrame) -> pd.Series:
+        if self.scenario == project_globals.SCENARIOS.baseline:
+            conditional_probabilities = {
+                True: self.screening_parameters[project_globals.SCREENING.START_ATTENDED_PREV_ATTENDANCE.name],
+                False: self.screening_parameters[project_globals.SCREENING.START_NOT_ATTENDED_PREV_ATTENDANCE.name]
+            }
+        else:
+            # Get base probability of screening attendance based on the current date
+            if self.clock() < project_globals.RAMP_UP_END:
+                elapsed_time = self.clock() - project_globals.RAMP_UP_START
+                progress_to_ramp_up_end = elapsed_time / (project_globals.RAMP_UP_END - project_globals.RAMP_UP_START)
+                attended_prev_ramp_up = self.screening_parameters[
+                    project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name
+                ] - self.screening_parameters[
+                    project_globals.SCREENING.START_ATTENDED_PREV_ATTENDANCE.name
+                ]
+                not_attended_prev_ramp_up = self.screening_parameters[
+                    project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name
+                ] - self.screening_parameters[
+                    project_globals.SCREENING.START_NOT_ATTENDED_PREV_ATTENDANCE.name
+                ]
+
+                conditional_probabilities = {
+                    True: attended_prev_ramp_up * progress_to_ramp_up_end,
+                    False: not_attended_prev_ramp_up * progress_to_ramp_up_end
+                }
+            else:
+                conditional_probabilities = {
+                    True: self.screening_parameters[project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name],
+                    False: self.screening_parameters[project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name]
+                }
+
+        return pop.loc[:, project_globals.ATTENDED_LAST_SCREENING].apply(lambda x: conditional_probabilities[x])
 
     def _do_screening(self, pop: pd.Series) -> pd.Series:
         """Perform screening for all simulants who attended their screening"""
