@@ -33,8 +33,6 @@ class TruncnormDist:
         ----------
         draw
             Draw for this simulation
-        params
-            TruncnorParams object with parameters for truncated normal distribution
         Returns
         -------
             The random variate from the truncated normal distribution.

@@ -13,17 +13,20 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 from pathlib import Path
+import random
 from typing import Dict
 
 from gbd_mapping import causes, covariates, risk_factors
 import numpy as np
 import pandas as pd
 from vivarium.framework.artifact import EntityKey
+from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import gbd
 from vivarium_inputs import interface
 from vivarium_inputs.mapping_extension import alternative_risk_factors
 
 from vivarium_csu_swissre_cancer import paths, globals as project_globals
+from vivarium_csu_swissre_cancer.utilities import TruncnormDist
 
 ARTIFACT_INDEX_COLUMNS = [
     'location',
@@ -34,6 +37,15 @@ ARTIFACT_INDEX_COLUMNS = [
     'year_end',
     'draw',
 ]
+
+PREVALENCE_RATIOS = {
+    project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO: TruncnormDist(
+        project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, 0.07, 0.06, 0.0, 100.0
+    ),
+    project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO: TruncnormDist(
+        project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, 0.33, 0.10, 0.0, 100.0
+    ),
+}
 
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
@@ -59,8 +71,6 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         project_globals.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
         project_globals.POPULATION.ACMR: load_acmr,
 
-        project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO: load_prevalence_ratio,
-        project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO: load_prevalence_ratio,
         project_globals.BREAST_CANCER.LCIS_PREVALENCE: load_prevalence,
         project_globals.BREAST_CANCER.DCIS_PREVALENCE: load_prevalence,
         project_globals.BREAST_CANCER.PREVALENCE: load_prevalence,
@@ -143,31 +153,26 @@ def load_metadata(key: str, location: str):
 
 
 def load_acmr(key: str, location: str) -> pd.DataFrame:
-    return _transform_raw_data(location, paths.RAW_ACMR_DATA_PATH)
-
-
-def load_prevalence_ratio(key: str, location: str) -> float:
-    # TODO get draw level data
-    return 0.35 if key == project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO else 0.08
+    return _transform_raw_data(location, paths.RAW_ACMR_DATA_PATH, True)
 
 
 def load_prevalence(key: str, location: str) -> pd.DataFrame:
-    base_prevalence = _transform_raw_data(location, paths.RAW_PREVALENCE_DATA_PATH)
+    base_prevalence = _transform_raw_data(location, paths.RAW_PREVALENCE_DATA_PATH, True)
     prevalence_ratio = 1
     if key == project_globals.BREAST_CANCER.LCIS_PREVALENCE:
-        prevalence_ratio = get_data(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
+        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
     elif key == project_globals.BREAST_CANCER.DCIS_PREVALENCE:
-        prevalence_ratio = get_data(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
+        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
     return base_prevalence * prevalence_ratio
 
 
 def load_incidence_rate(key: str, location: str):
-    base_incidence_rate = _transform_raw_data(location, paths.RAW_INCIDENCE_RATE_DATA_PATH)
+    base_incidence_rate = _transform_raw_data(location, paths.RAW_INCIDENCE_RATE_DATA_PATH, False)
     prevalence_ratio = 1
     if key == project_globals.BREAST_CANCER.LCIS_INCIDENCE_RATE:
-        prevalence_ratio = get_data(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
+        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
     elif key == project_globals.BREAST_CANCER.DCIS_INCIDENCE_RATE:
-        prevalence_ratio = get_data(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
+        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
     return base_incidence_rate * prevalence_ratio
 
 
@@ -182,7 +187,7 @@ def load_breast_cancer_transition_rate(key: str, location: str):
 def load_disability_weight(key: str, location: str):
     if key == project_globals.BREAST_CANCER.DISABILITY_WEIGHT:
         # Get breast cancer prevalence by location
-        prevalence_data = _transform_raw_data_granular(paths.RAW_PREVALENCE_DATA_PATH)
+        prevalence_data = _transform_raw_data_granular(paths.RAW_PREVALENCE_DATA_PATH, True)
         location_weighted_disability_weight = 0
 
         for swissre_location, location_weight in project_globals.SWISSRE_LOCATION_WEIGHTS.items():
@@ -217,11 +222,17 @@ def load_emr(key: str, location: str):
 
 
 def load_csmr(key: str, location: str):
-    return _transform_raw_data(location, paths.RAW_MORTALITY_DATA_PATH)
+    return _transform_raw_data(location, paths.RAW_MORTALITY_DATA_PATH, False)
 
 
-def _transform_raw_data(location: str, data_path: Path) -> pd.DataFrame:
-    processed_data = _transform_raw_data_preliminary(data_path)
+def _get_prevalence_ratio(key: str, location: str) -> float:
+    random.seed(get_hash(f'{location}_{key}'))
+    random_values = np.random.random(1000)
+    return PREVALENCE_RATIOS[key].ppf(random_values).tolist()
+
+
+def _transform_raw_data(location: str, data_path: Path, is_log_data: bool) -> pd.DataFrame:
+    processed_data = _transform_raw_data_preliminary(data_path, is_log_data)
     processed_data['location'] = location
 
     # Weight the covered provinces
@@ -245,8 +256,8 @@ def _transform_raw_data(location: str, data_path: Path) -> pd.DataFrame:
     return processed_data
 
 
-def _transform_raw_data_granular(data_path: Path) -> Dict[str, pd.DataFrame]:
-    processed_data = _transform_raw_data_preliminary(data_path)
+def _transform_raw_data_granular(data_path: Path, is_log_data: bool = False) -> Dict[str, pd.DataFrame]:
+    processed_data = _transform_raw_data_preliminary(data_path, is_log_data)
     processed_data_by_location = {}
     for swissre_location in project_globals.SWISSRE_LOCATION_WEIGHTS:
         location_data = (
@@ -262,7 +273,7 @@ def _transform_raw_data_granular(data_path: Path) -> Dict[str, pd.DataFrame]:
     return processed_data_by_location
 
 
-def _transform_raw_data_preliminary(data_path: Path) -> pd.DataFrame:
+def _transform_raw_data_preliminary(data_path: Path, is_log_data: bool = False) -> pd.DataFrame:
     """Transforms data to a form with draws in the index and raw locations as columns"""
     raw_data: pd.DataFrame = pd.read_hdf(data_path)
     age_bins = gbd.get_age_bins().set_index('age_group_id')
@@ -270,7 +281,7 @@ def _transform_raw_data_preliminary(data_path: Path) -> pd.DataFrame:
 
     # Transform raw data from log space to linear space
     log_value_column = raw_data.columns[0]
-    raw_data['value'] = np.exp(raw_data[log_value_column])
+    raw_data['value'] = np.exp(raw_data[log_value_column]) if is_log_data else raw_data[log_value_column]
 
     processed_data = (
         raw_data
