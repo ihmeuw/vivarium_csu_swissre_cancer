@@ -61,8 +61,7 @@ def read_data(path: Path) -> (pd.DataFrame, List[str]):
     data = (data
             .drop(columns=data.columns.intersection(project_globals.THROWAWAY_COLUMNS))
             .reset_index(drop=True)
-            # TODO add back in when we have scenarios
-            # .rename(columns={project_globals.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
+            .rename(columns={project_globals.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
             )
     data[project_globals.INPUT_DRAW_COLUMN] = data[project_globals.INPUT_DRAW_COLUMN].astype(int)
     data[project_globals.RANDOM_SEED_COLUMN] = data[project_globals.RANDOM_SEED_COLUMN].astype(int)
@@ -77,11 +76,10 @@ def filter_out_incomplete(data, keyspace):
         # For each draw, gather all random seeds completed for all scenarios.
         random_seeds = set(keyspace[project_globals.RANDOM_SEED_COLUMN])
         draw_data = data.loc[data[project_globals.INPUT_DRAW_COLUMN] == draw]
-        # TODO add back in when we have scenarios
-        # for scenario in keyspace[project_globals.OUTPUT_SCENARIO_COLUMN]:
-        #     seeds_in_data = draw_data.loc[data[SCENARIO_COLUMN] == scenario,
-        #                                   project_globals.RANDOM_SEED_COLUMN].unique()
-        #     random_seeds = random_seeds.intersection(seeds_in_data)
+        for scenario in keyspace[project_globals.OUTPUT_SCENARIO_COLUMN]:
+            seeds_in_data = draw_data.loc[data[SCENARIO_COLUMN] == scenario,
+                                          project_globals.RANDOM_SEED_COLUMN].unique()
+            random_seeds = random_seeds.intersection(seeds_in_data)
         draw_data = draw_data.loc[draw_data[project_globals.RANDOM_SEED_COLUMN].isin(random_seeds)]
         output.append(draw_data)
     return pd.concat(output, ignore_index=True).reset_index(drop=True)
