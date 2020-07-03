@@ -36,6 +36,7 @@ def make_measure_data(data):
         deaths=get_by_cause_measure_data(data, 'deaths'),
         state_person_time=get_state_person_time_measure_data(data),
         transition_count=get_transition_count_measure_data(data),
+        event_count=get_measure_data(data, 'event_count'),
     )
     return measure_data
 
@@ -48,6 +49,7 @@ class MeasureData(NamedTuple):
     deaths: pd.DataFrame
     state_person_time: pd.DataFrame
     transition_count: pd.DataFrame
+    event_count: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
