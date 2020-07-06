@@ -87,7 +87,7 @@ class ScreeningAlgorithm:
         #  - beginning of sim for women between 30 & 70
         #  - 30th birthday for women younger than 30
         screening_start = pd.Series(pd.NaT, index=pop.index)
-        screening_start.loc[~female_under_30 & female_under_70] = self.clock()
+        screening_start.loc[female_under_70] = self.clock()
         screening_start.loc[female_under_30] = (
                 screening_start.loc[female_under_30] + pd.to_timedelta(30 - pop.loc[female_under_30, AGE], unit='Y')
         )
