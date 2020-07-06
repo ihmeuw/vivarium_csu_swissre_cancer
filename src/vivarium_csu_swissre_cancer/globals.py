@@ -216,9 +216,6 @@ SCREENING_MODEL_TRANSITIONS = (
     TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{POSITIVE_DCIS_STATE_NAME}'),
 )
 
-DISEASE_MODELS = (
-    BREAST_CANCER_MODEL_NAME,
-)
 STATE_MACHINE_MAP = {
     BREAST_CANCER_MODEL_NAME: {
         'states': BREAST_CANCER_MODEL_STATES,
@@ -241,8 +238,8 @@ def get_screened_state(breast_cancer_model_state: str) -> str:
     }[breast_cancer_model_state]
 
 
-STATES = tuple(state for model in DISEASE_MODELS for state in STATE_MACHINE_MAP[model]['states'])
-TRANSITIONS = tuple(transition for model in DISEASE_MODELS for transition in STATE_MACHINE_MAP[model]['transitions'])
+STATES = tuple(state for model in STATE_MACHINE_MAP.values() for state in model['states'])
+TRANSITIONS = tuple(state for model in STATE_MACHINE_MAP.values() for state in model['transitions'])
 
 
 ########################
