@@ -257,6 +257,9 @@ TOTAL_POPULATION_COLUMN = 'total_population'
 TOTAL_YLDS_COLUMN = 'years_lived_with_disability'
 TOTAL_YLLS_COLUMN = 'years_of_life_lost'
 
+SCREENING_SCHEDULED = 'screening_scheduled_count'
+SCREENING_ATTENDED = 'screening_attended_count'
+
 # Columns from parallel runs
 INPUT_DRAW_COLUMN = 'input_draw'
 RANDOM_SEED_COLUMN = 'random_seed'
@@ -278,6 +281,7 @@ YLLS_COLUMN_TEMPLATE = 'ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_c
 YLDS_COLUMN_TEMPLATE = 'ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
 STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
 TRANSITION_COUNT_COLUMN_TEMPLATE = '{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -287,6 +291,7 @@ COLUMN_TEMPLATES = {
     'ylds': YLDS_COLUMN_TEMPLATE,
     'state_person_time': STATE_PERSON_TIME_COLUMN_TEMPLATE,
     'transition_count': TRANSITION_COUNT_COLUMN_TEMPLATE,
+    'event_count': EVENT_COUNT_COLUMN_TEMPLATE,
 }
 
 NON_COUNT_TEMPLATES = [
@@ -296,6 +301,7 @@ POP_STATES = ('living', 'dead', 'tracked', 'untracked')
 SEXES = ('male', 'female')
 YEARS = tuple(range(2020, 2039))
 AGE_COHORTS = tuple(f'{2020 - (x + 5)}_to_{2020 - x}' for x in range(15, 85, 5))
+EVENTS = (SCREENING_SCHEDULED, SCREENING_ATTENDED)
 CAUSES_OF_DEATH = ('other_causes', BREAST_CANCER_STATE_NAME,)
 CAUSES_OF_DISABILITY = (BREAST_CANCER_STATE_NAME,)
 
@@ -308,6 +314,7 @@ TEMPLATE_FIELD_MAP = {
     'CAUSE_OF_DISABILITY': CAUSES_OF_DISABILITY,
     'STATE': STATES,
     'TRANSITION': TRANSITIONS,
+    'EVENT': EVENTS,
 }
 
 

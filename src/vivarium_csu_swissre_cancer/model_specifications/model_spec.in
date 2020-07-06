@@ -12,7 +12,7 @@ components:
         - DisabilityObserver()
         - DiseaseObserver('breast_cancer')
         - DiseaseObserver('screening_result')
-#        - ScreeningObserver()
+        - ScreeningObserver()
 
 configuration:
     input_data:
@@ -55,6 +55,10 @@ configuration:
             by_sex: True
             by_year: True
         breast_cancer:
+            by_age: False
+            by_sex: True
+            by_year: True
+        screening_result:
             by_age: False
             by_sex: True
             by_year: True
