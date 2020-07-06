@@ -10,8 +10,7 @@ from vivarium_csu_swissre_cancer import globals as project_globals
 SCENARIO_COLUMN = 'scenario'
 GROUPBY_COLUMNS = [
     project_globals.INPUT_DRAW_COLUMN,
-    # TODO add in when we have scenarios
-    # SCENARIO_COLUMN
+    SCENARIO_COLUMN
 ]
 OUTPUT_COLUMN_SORT_ORDER = [
     'age_group',
