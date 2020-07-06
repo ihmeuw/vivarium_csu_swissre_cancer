@@ -137,6 +137,10 @@ class ScreeningAlgorithm:
         screening_result = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME].copy()
         screening_result.loc[attends_screening] = self._do_screening(pop.loc[attends_screening, :])
 
+        # Update previous screening column
+        previous_screening = pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE].copy()
+        previous_screening.loc[screening_scheduled] = pop.loc[screening_scheduled, project_globals.NEXT_SCREENING_DATE]
+
         # Next scheduled screening for everyone
         next_screening = pop.loc[:, project_globals.NEXT_SCREENING_DATE].copy()
         next_screening.loc[screening_scheduled] = self._schedule_screening(
@@ -146,7 +150,7 @@ class ScreeningAlgorithm:
 
         # Update values
         self.population_view.update(
-            pd.concat([screening_result, next_screening, attended_last_screening], axis=1)
+            pd.concat([screening_result, previous_screening, next_screening, attended_last_screening], axis=1)
         )
 
     def _get_screening_attendance_probability(self, pop: pd.DataFrame) -> pd.Series:
