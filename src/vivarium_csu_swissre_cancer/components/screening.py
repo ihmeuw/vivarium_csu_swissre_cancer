@@ -161,28 +161,33 @@ class ScreeningAlgorithm:
             }
         else:
             # Get base probability of screening attendance based on the current date
+            screening_start_attended_previous = self.screening_parameters[
+                project_globals.SCREENING.START_ATTENDED_PREV_ATTENDANCE.name
+            ]
+            screening_start_not_attended_previous = self.screening_parameters[
+                project_globals.SCREENING.START_NOT_ATTENDED_PREV_ATTENDANCE.name
+            ]
+            screening_end_attended_previous = self.screening_parameters[
+                project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name
+            ]
+            screening_end_not_attended_previous = self.screening_parameters[
+                project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name
+            ]
+
             if self.clock() < project_globals.RAMP_UP_END:
                 elapsed_time = self.clock() - project_globals.RAMP_UP_START
                 progress_to_ramp_up_end = elapsed_time / (project_globals.RAMP_UP_END - project_globals.RAMP_UP_START)
-                attended_prev_ramp_up = self.screening_parameters[
-                    project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name
-                ] - self.screening_parameters[
-                    project_globals.SCREENING.START_ATTENDED_PREV_ATTENDANCE.name
-                ]
-                not_attended_prev_ramp_up = self.screening_parameters[
-                    project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name
-                ] - self.screening_parameters[
-                    project_globals.SCREENING.START_NOT_ATTENDED_PREV_ATTENDANCE.name
-                ]
+                attended_prev_ramp_up = screening_end_attended_previous - screening_start_attended_previous
+                not_attended_prev_ramp_up = screening_end_not_attended_previous - screening_start_not_attended_previous
 
                 conditional_probabilities = {
-                    True: attended_prev_ramp_up * progress_to_ramp_up_end,
-                    False: not_attended_prev_ramp_up * progress_to_ramp_up_end
+                    True: attended_prev_ramp_up * progress_to_ramp_up_end + screening_start_attended_previous,
+                    False: not_attended_prev_ramp_up * progress_to_ramp_up_end + screening_start_not_attended_previous,
                 }
             else:
                 conditional_probabilities = {
-                    True: self.screening_parameters[project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name],
-                    False: self.screening_parameters[project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name]
+                    True: screening_end_attended_previous,
+                    False: screening_end_not_attended_previous,
                 }
 
         return pop.loc[:, project_globals.ATTENDED_LAST_SCREENING].apply(lambda x: conditional_probabilities[x])
