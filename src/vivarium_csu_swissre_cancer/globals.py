@@ -263,8 +263,7 @@ SCREENING_ATTENDED = 'screening_attended_count'
 # Columns from parallel runs
 INPUT_DRAW_COLUMN = 'input_draw'
 RANDOM_SEED_COLUMN = 'random_seed'
-# TODO add back when we have scenarios
-# OUTPUT_SCENARIO_COLUMN = 'ldlc_treatment_algorithm.scenario'
+OUTPUT_SCENARIO_COLUMN = 'screening_algorithm.scenario'
 
 STANDARD_COLUMNS = {
     'total_population': TOTAL_POPULATION_COLUMN,
