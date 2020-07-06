@@ -365,16 +365,19 @@ class ScreeningObserver:
     def on_collect_metrics(self, event: 'Event'):
         pop = self.population_view.get(event.index)
         for labels, pop_in_group in self.stratifier.group(pop):
-            scheduled_screening = (pop_in_group.loc[:, project_globals.PREVIOUS_SCREENING_DATE]
-                                   > (self.clock() - self.step_size()))
-            attended_screening = scheduled_screening & pop_in_group.loc[:, project_globals.ATTENDED_LAST_SCREENING]
-            counts_this_step = self.stratifier.update_labels(
-                {
-                    project_globals.SCREENING_SCHEDULED: sum(scheduled_screening),
-                    project_globals.SCREENING_ATTENDED: sum(attended_screening)
-                }, labels
-            )
-            self.counts.update(counts_this_step)
+            for sex in project_globals.SEXES:
+                sex_mask = pop_in_group.loc[:, 'sex'] == sex.title()
+                scheduled_screening = (pop_in_group.loc[sex_mask, project_globals.PREVIOUS_SCREENING_DATE]
+                                       > (self.clock() - self.step_size()))
+                attended_screening = scheduled_screening & pop_in_group.loc[:, project_globals.ATTENDED_LAST_SCREENING]
+                year_sex = f'in_{self.clock().year}_among_{sex}'
+                counts_this_step = self.stratifier.update_labels(
+                    {
+                        f'{project_globals.SCREENING_SCHEDULED}_{year_sex}': sum(scheduled_screening),
+                        f'{project_globals.SCREENING_ATTENDED}_{year_sex}': sum(attended_screening)
+                    }, labels
+                )
+                self.counts.update(counts_this_step)
 
     def metrics(self, index: pd.Index, metrics: Dict[str, float]):
         metrics.update(self.counts)
