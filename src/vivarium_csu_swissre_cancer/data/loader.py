@@ -173,7 +173,7 @@ def load_incidence_rate(key: str, location: str):
     if key == project_globals.BREAST_CANCER.INCIDENCE_RATE:
         incidence_rate = _transform_raw_data(location, paths.RAW_INCIDENCE_RATE_DATA_PATH, False)
     else:
-        base_prevalence = load_prevalence(project_globals.BREAST_CANCER.PREVALENCE)
+        base_prevalence = load_prevalence(project_globals.BREAST_CANCER.PREVALENCE, location)
         if key == project_globals.BREAST_CANCER.LCIS_INCIDENCE_RATE:
             prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
             duration = LCIS_DURATION
