@@ -5,15 +5,9 @@ components:
             - Mortality()
         risks:
             - Risk('risk_factor.family_history')
-            - RiskEffect('risk_factor.family_history', 'cause.breast_cancer.prevalence')
-            - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.prevalence')
-            - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.prevalence')
 
             - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.incidence_rate')
             - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.incidence_rate')
-
-            - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.transition_rate')
-            - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.transition_rate')
 
     vivarium_csu_swissre_cancer.components:
         - BreastCancer()
@@ -56,22 +50,11 @@ configuration:
     family_history:
         exposure: 0.02
 
-    effect_of_family_history_on_breast_cancer:
-        prevalence:
-            relative_risk: 1.9
     effect_of_family_history_on_lobular_carcinoma_in_situ:
-        prevalence:
-            relative_risk: 1.9
         incidence_rate:
-            relative_risk: 1.9
-        transition_rate:
             relative_risk: 1.9
     effect_of_family_history_on_ductal_carcinoma_in_situ:
-        prevalence:
-            relative_risk: 1.9
         incidence_rate:
-            relative_risk: 1.9
-        transition_rate:
             relative_risk: 1.9
 
     screening_algorithm:
