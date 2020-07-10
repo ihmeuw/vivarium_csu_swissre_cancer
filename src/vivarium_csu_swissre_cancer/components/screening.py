@@ -50,6 +50,8 @@ class ScreeningAlgorithm:
         self.screening_parameters = {parameter.name: parameter.get_random_variable(draw)
                                      for parameter in project_globals.SCREENING}
 
+        self.family_history = builder.value.get_value('family_history.exposure')
+
         required_columns = [AGE, SEX, project_globals.BREAST_CANCER_MODEL_NAME]
         columns_created = [
             project_globals.SCREENING_RESULT_MODEL_NAME,
@@ -194,8 +196,7 @@ class ScreeningAlgorithm:
 
     def _do_screening(self, pop: pd.Series) -> pd.Series:
         """Perform screening for all simulants who attended their screening"""
-        # TODO update with family history information
-        family_history = pd.Series(False, index=pop.index)
+        family_history = self.family_history(pop.index) == 'cat1'
         has_lcis_dcis = self._has_lcis_dcis(pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME])
 
         mri = family_history & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
