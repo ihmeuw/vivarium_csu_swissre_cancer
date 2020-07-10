@@ -38,6 +38,9 @@ ARTIFACT_INDEX_COLUMNS = [
     'draw',
 ]
 
+LCIS_DURATION = 0.6
+DCIS_DURATION = 0.5
+
 PREVALENCE_RATIOS = {
     project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO: TruncnormDist(
         project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, 0.07, 0.06, 0.0, 100.0
@@ -167,13 +170,18 @@ def load_prevalence(key: str, location: str) -> pd.DataFrame:
 
 
 def load_incidence_rate(key: str, location: str):
-    base_incidence_rate = _transform_raw_data(location, paths.RAW_INCIDENCE_RATE_DATA_PATH, False)
-    prevalence_ratio = 1
-    if key == project_globals.BREAST_CANCER.LCIS_INCIDENCE_RATE:
-        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
-    elif key == project_globals.BREAST_CANCER.DCIS_INCIDENCE_RATE:
-        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
-    return base_incidence_rate * prevalence_ratio
+    if key == project_globals.BREAST_CANCER.INCIDENCE_RATE:
+        incidence_rate = _transform_raw_data(location, paths.RAW_INCIDENCE_RATE_DATA_PATH, False)
+    else:
+        base_prevalence = load_prevalence(project_globals.BREAST_CANCER.PREVALENCE, location)
+        if key == project_globals.BREAST_CANCER.LCIS_INCIDENCE_RATE:
+            prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
+            duration = LCIS_DURATION
+        else:
+            prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
+            duration = DCIS_DURATION
+        incidence_rate = base_prevalence * prevalence_ratio / duration
+    return incidence_rate
 
 
 def load_breast_cancer_transition_rate(key: str, location: str):
