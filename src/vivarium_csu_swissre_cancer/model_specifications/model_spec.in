@@ -3,6 +3,11 @@ components:
         population:
             - BasePopulation()
             - Mortality()
+        risks:
+            - Risk('risk_factor.family_history')
+
+            - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.incidence_rate')
+            - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.incidence_rate')
 
     vivarium_csu_swissre_cancer.components:
         - BreastCancer()
@@ -41,6 +46,16 @@ configuration:
         population_size: 200000
         age_start: 15
         age_end: 95
+
+    family_history:
+        exposure: 0.02
+
+    effect_of_family_history_on_lobular_carcinoma_in_situ:
+        incidence_rate:
+            relative_risk: 1.9
+    effect_of_family_history_on_ductal_carcinoma_in_situ:
+        incidence_rate:
+            relative_risk: 1.9
 
     screening_algorithm:
         scenario: 'baseline'
