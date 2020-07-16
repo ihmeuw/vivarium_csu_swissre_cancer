@@ -274,13 +274,18 @@ STANDARD_COLUMNS = {
 THROWAWAY_COLUMNS = [f'{state}_event_count' for state in STATES]
 
 TOTAL_POPULATION_COLUMN_TEMPLATE = 'total_population_{POP_STATE}'
-PERSON_TIME_COLUMN_TEMPLATE = 'person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-DEATH_COLUMN_TEMPLATE = 'death_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-YLLS_COLUMN_TEMPLATE = 'ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-YLDS_COLUMN_TEMPLATE = 'ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-TRANSITION_COUNT_COLUMN_TEMPLATE = '{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+PERSON_TIME_COLUMN_TEMPLATE = 'person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
+DEATH_COLUMN_TEMPLATE = ('death_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                         '_family_history_{HISTORY}')
+YLLS_COLUMN_TEMPLATE = ('ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                        '_family_history_{HISTORY}')
+YLDS_COLUMN_TEMPLATE = ('ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                        '_family_history_{HISTORY}')
+STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                                     '_family_history_{HISTORY}')
+TRANSITION_COUNT_COLUMN_TEMPLATE = ('{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                                    '_family_history_{HISTORY}')
+EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -303,6 +308,7 @@ AGE_COHORTS = tuple(f'{2020 - (x + 5)}_to_{2020 - x}' for x in range(15, 85, 5))
 EVENTS = (SCREENING_SCHEDULED, SCREENING_ATTENDED)
 CAUSES_OF_DEATH = ('other_causes', BREAST_CANCER_STATE_NAME,)
 CAUSES_OF_DISABILITY = (BREAST_CANCER_STATE_NAME,)
+FAMILY_HISTORY_STATE = ('positive', 'negative',)
 
 TEMPLATE_FIELD_MAP = {
     'POP_STATE': POP_STATES,
@@ -314,6 +320,7 @@ TEMPLATE_FIELD_MAP = {
     'STATE': STATES,
     'TRANSITION': TRANSITIONS,
     'EVENT': EVENTS,
+    'HISTORY': FAMILY_HISTORY_STATE,
 }
 
 

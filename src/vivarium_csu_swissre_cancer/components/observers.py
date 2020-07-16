@@ -36,13 +36,13 @@ class ResultsStratifier:
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         """Perform this component's setup."""
-        # The only thing you should request here are resources necessary for
-        # results stratification.
+        # The only thing you should request here are resources necessary for results stratification.
         self.pipelines = {
-            # 'pipeline_one': builder.value.get_value('pipeline_one'),
+            'family_history': builder.value.get_value('family_history.exposure'),
         }
         columns_required = [
             'age',
+            'family_history_propensity',
         ]
         self.population_view = builder.population.get_view(columns_required)
 
@@ -56,10 +56,10 @@ class ResultsStratifier:
         self.stratification_levels = {
             'age_cohort': {age_cohort: get_age_range_function(age_cohort)
                            for age_cohort in project_globals.AGE_COHORTS},
-            # 'P1': {
-            #     'high': lambda: self.pipeline_values['pipeline_one'] > 5,
-            #     'low': lambda: self.pipelines['pipeline_one'] <= 5,
-            # },
+            'family_history': {
+                'positive': lambda: self.pipeline_values['family_history'] == 'cat1',
+                'negative': lambda: self.pipeline_values['family_history'] == 'cat2',
+            },
         }
         self.pipeline_values = {pipeline: None for pipeline in self.pipelines}
         self.population_values = None
