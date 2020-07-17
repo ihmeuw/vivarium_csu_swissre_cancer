@@ -31,7 +31,6 @@ class TreatmentEffect:
             project_globals.POSITIVE_LCIS_STATE_NAME: project_globals.LCIS_TREATMENT_EFFICACY.get_random_variable(draw),
             project_globals.POSITIVE_DCIS_STATE_NAME: project_globals.DCIS_TREATMENT_EFFICACY.get_random_variable(draw),
         }
-        self.dcis_efficacy = project_globals.DCIS_TREATMENT_EFFICACY.get_random_variable(draw)
 
         required_columns = [project_globals.SCREENING_RESULT_MODEL_NAME]
         self.population_view = builder.population.get_view(required_columns)
@@ -41,7 +40,7 @@ class TreatmentEffect:
             modifier=lambda index, target: self.treat(index, target, project_globals.POSITIVE_LCIS_STATE_NAME),
             # TODO add intermediate pipeline between screening result and treatment to allow for less than full
             #  treatment coverage
-            requires_columns=['age', 'sex', project_globals.SCREENING_RESULT_MODEL_NAME]
+            requires_columns=[project_globals.SCREENING_RESULT_MODEL_NAME]
         )
 
         builder.value.register_value_modifier(
@@ -49,7 +48,7 @@ class TreatmentEffect:
             modifier=lambda index, target: self.treat(index, target, project_globals.POSITIVE_DCIS_STATE_NAME),
             # TODO add intermediate pipeline between screening result and treatment to allow for less than full
             #  treatment coverage
-            requires_columns=['age', 'sex', project_globals.SCREENING_RESULT_MODEL_NAME]
+            requires_columns=[project_globals.SCREENING_RESULT_MODEL_NAME]
         )
 
     def treat(self, index, target, state_name):
