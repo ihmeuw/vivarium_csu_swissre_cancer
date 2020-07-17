@@ -12,6 +12,7 @@ components:
     vivarium_csu_swissre_cancer.components:
         - BreastCancer()
         - ScreeningAlgorithm()
+        - TreatmentEffect()
 
         - MortalityObserver()
         - DisabilityObserver()

@@ -2,6 +2,8 @@ from datetime import datetime
 import itertools
 from typing import NamedTuple
 
+from vivarium_public_health.utilities import TargetString
+
 from vivarium_csu_swissre_cancer.utilities import TruncnormDist
 
 ####################
@@ -70,21 +72,21 @@ POPULATION = __Population()
 
 
 class __BreastCancer(NamedTuple):
-    LCIS_PREVALENCE: str = 'sequela.lobular_carcinoma_in_situ.prevalence'
-    DCIS_PREVALENCE: str = 'sequela.ductal_carcinoma_in_situ.prevalence'
-    PREVALENCE: str = 'cause.breast_cancer.prevalence'
-    LCIS_INCIDENCE_RATE: str = 'sequela.lobular_carcinoma_in_situ.incidence_rate'
-    DCIS_INCIDENCE_RATE: str = 'sequela.ductal_carcinoma_in_situ.incidence_rate'
-    INCIDENCE_RATE: str = 'cause.breast_cancer.incidence_rate'
-    LCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.lobular_carcinoma_in_situ.transition_rate'
-    DCIS_BREAST_CANCER_TRANSITION_RATE: str = 'sequela.ductal_carcinoma_in_situ.transition_rate'
-    DISABILITY_WEIGHT: str = 'cause.breast_cancer.disability_weight'
-    EMR: str = 'cause.breast_cancer.excess_mortality_rate'
-    CSMR: str = 'cause.breast_cancer.cause_specific_mortality_rate'
-    RESTRICTIONS: str = 'cause.breast_cancer.restrictions'
+    LCIS_PREVALENCE: TargetString = TargetString('sequela.lobular_carcinoma_in_situ.prevalence')
+    DCIS_PREVALENCE: TargetString = TargetString('sequela.ductal_carcinoma_in_situ.prevalence')
+    PREVALENCE: TargetString = TargetString('cause.breast_cancer.prevalence')
+    LCIS_INCIDENCE_RATE: TargetString = TargetString('sequela.lobular_carcinoma_in_situ.incidence_rate')
+    DCIS_INCIDENCE_RATE: TargetString = TargetString('sequela.ductal_carcinoma_in_situ.incidence_rate')
+    INCIDENCE_RATE: TargetString = TargetString('cause.breast_cancer.incidence_rate')
+    LCIS_BREAST_CANCER_TRANSITION_RATE: TargetString = TargetString('sequela.lobular_carcinoma_in_situ.transition_rate')
+    DCIS_BREAST_CANCER_TRANSITION_RATE: TargetString = TargetString('sequela.ductal_carcinoma_in_situ.transition_rate')
+    DISABILITY_WEIGHT: TargetString = TargetString('cause.breast_cancer.disability_weight')
+    EMR: TargetString = TargetString('cause.breast_cancer.excess_mortality_rate')
+    CSMR: TargetString = TargetString('cause.breast_cancer.cause_specific_mortality_rate')
+    RESTRICTIONS: TargetString = TargetString('cause.breast_cancer.restrictions')
 
-    LCIS_PREVALENCE_RATIO = 'sequela.lobular_carcinoma_in_situ.prevalence_ratio'
-    DCIS_PREVALENCE_RATIO = 'sequela.ductal_carcinoma_in_situ.prevalence_ratio'
+    LCIS_PREVALENCE_RATIO = TargetString('sequela.lobular_carcinoma_in_situ.prevalence_ratio')
+    DCIS_PREVALENCE_RATIO = TargetString('sequela.ductal_carcinoma_in_situ.prevalence_ratio')
 
     @property
     def name(self):
@@ -153,6 +155,11 @@ class __Screening(NamedTuple):
 
 SCREENING = __Screening()
 
+
+LCIS_TREATMENT_EFFICACY: TruncnormDist = TruncnormDist('lcis_treatment_efficacy', 0.95, 0.01, 0.0, 0.99,
+                                                       'treatment_efficacy')
+DCIS_TREATMENT_EFFICACY: TruncnormDist = TruncnormDist('dcis_treatment_efficacy', 0.95, 0.01, 0.0, 0.99,
+                                                       'treatment_efficacy')
 
 DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
 DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)

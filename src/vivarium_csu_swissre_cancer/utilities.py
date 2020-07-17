@@ -20,7 +20,7 @@ class TruncnormDist:
     -------
         An object with parameters for scipy.stats.truncnorm
     """
-    def __init__(self, name, mean, sd, lower=0, upper=1, key=None):
+    def __init__(self, name, mean, sd, lower=0.0, upper=1.0, key=None):
         self.name = name
         self.a = (lower - mean) / sd if sd else 0
         self.b = (upper - mean) / sd if sd else 0
