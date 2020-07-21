@@ -30,8 +30,9 @@ class ResultsStratifier:
 
     """
 
-    def __init__(self, observer_name: str):
+    def __init__(self, observer_name: str, has_screening_state: bool = False):
         self.name = f'{observer_name}_results_stratifier'
+        self.has_screening_state = has_screening_state
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
@@ -44,7 +45,6 @@ class ResultsStratifier:
             'age',
             'family_history_propensity',
         ]
-        self.population_view = builder.population.get_view(columns_required)
 
         def get_age_range_function(age_cohort):
             birth_year_bounds = [2020 - int(year) for year in age_cohort.split('_to_')]
@@ -52,6 +52,9 @@ class ResultsStratifier:
                 (birth_year_bounds[1] <= self.population_values['age'])
                 & (self.population_values['age'] < (birth_year_bounds[0]))
             )
+
+        def get_screening_result_function(state_name):
+            return lambda: self.population_values[project_globals.SCREENING_RESULT_MODEL_NAME] == state_name
 
         self.stratification_levels = {
             'age_cohort': {age_cohort: get_age_range_function(age_cohort)
@@ -61,6 +64,15 @@ class ResultsStratifier:
                 'negative': lambda: self.pipeline_values['family_history'] == 'cat2',
             },
         }
+
+        if self.has_screening_state:
+            columns_required.append(project_globals.SCREENING_RESULT_MODEL_NAME)
+            self.stratification_levels['screening_result'] = {
+                state_name: get_screening_result_function(state_name)
+                for state_name in project_globals.SCREENING_MODEL_STATES
+            }
+
+        self.population_view = builder.population.get_view(columns_required)
         self.pipeline_values = {pipeline: None for pipeline in self.pipelines}
         self.population_values = None
         self.stratification_groups = None
@@ -68,6 +80,8 @@ class ResultsStratifier:
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  requires_columns=columns_required,
                                                  requires_values=list(self.pipelines.keys()))
+
+        builder.event.register_listener('simulation_end', self.on_simulation_end)
 
     # noinspection PyAttributeOutsideInit
     def on_initialize_simulants(self, pop_data: 'SimulantData'):
@@ -86,6 +100,13 @@ class ResultsStratifier:
             stratification_groups.loc[mask] = stratification_group_name
 
         self.stratification_groups = stratification_groups
+
+    # noinspection PyAttributeOutsideInit
+    def on_simulation_end(self, event: 'Event'):
+        if self.has_screening_state:
+            self.population_values.loc[project_globals.SCREENING_RESULT_MODEL_NAME] = (
+                self.population_view.get(event.index).loc[:, project_globals.SCREENING_RESULT_MODEL_NAME]
+            )
 
     def get_all_stratifications(self) -> List[Tuple[Dict[str, str], ...]]:
         """
@@ -159,7 +180,7 @@ class MortalityObserver(MortalityObserver_):
 
     def __init__(self):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name)
+        self.stratifier = ResultsStratifier(self.name, True)
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:

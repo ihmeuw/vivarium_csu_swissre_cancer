@@ -281,11 +281,12 @@ STANDARD_COLUMNS = {
 THROWAWAY_COLUMNS = [f'{state}_event_count' for state in STATES]
 
 TOTAL_POPULATION_COLUMN_TEMPLATE = 'total_population_{POP_STATE}'
-PERSON_TIME_COLUMN_TEMPLATE = 'person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
+PERSON_TIME_COLUMN_TEMPLATE = ('person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
+                               '_screening_state_{SCREENING_STATE}')
 DEATH_COLUMN_TEMPLATE = ('death_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-                         '_family_history_{HISTORY}')
+                         '_family_history_{HISTORY}_screening_state_{SCREENING_STATE}')
 YLLS_COLUMN_TEMPLATE = ('ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-                        '_family_history_{HISTORY}')
+                        '_family_history_{HISTORY}_screening_state_{SCREENING_STATE}')
 YLDS_COLUMN_TEMPLATE = ('ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
                         '_family_history_{HISTORY}')
 STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
