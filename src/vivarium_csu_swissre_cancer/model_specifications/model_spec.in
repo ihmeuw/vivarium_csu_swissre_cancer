@@ -19,6 +19,7 @@ components:
         - DiseaseObserver('breast_cancer')
         - DiseaseObserver('screening_result')
         - ScreeningObserver()
+        #- SampleHistoryObserver()
 
 configuration:
     input_data:
