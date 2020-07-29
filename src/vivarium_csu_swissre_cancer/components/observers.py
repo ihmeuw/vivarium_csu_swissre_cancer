@@ -414,7 +414,8 @@ class SampleHistoryObserver:
         'metrics': {
             'sample_history_observer': {
                 'sample_size': 1000,
-                'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
+                # 'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
+                'path': '/home/rmudambi/scratch/sample_history.hdf'
             }
         }
     }
@@ -427,8 +428,10 @@ class SampleHistoryObserver:
         self.history_snapshots = []
         self.sample_index = None
 
+    # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         self.clock = builder.time.clock()
+        self.step_size = builder.time.step_size()
         self.sample_history_parameters = builder.configuration.metrics.sample_history_observer
         self.randomness = builder.randomness.get_stream("sample_history")
 
@@ -437,30 +440,20 @@ class SampleHistoryObserver:
 
         columns_required = [
             'alive', 'age', 'sex', 'entrance_time', 'exit_time',
-            project_globals.TREATMENT.name,
-            'initial_treatment_proportion_reduction',
+            project_globals.BREAST_CANCER_MODEL_NAME,
+            project_globals.SCREENING_RESULT_MODEL_NAME,
             'cause_of_death',
-            'acute_myocardial_infarction_event_time',
-            'post_myocardial_infarction_event_time',
-            'acute_ischemic_stroke_event_time',
-            'post_ischemic_stroke_event_time',
-            project_globals.DOCTOR_VISIT,
-            project_globals.FOLLOW_UP_DATE,
-        ]
+            project_globals.PREVIOUS_SCREENING_DATE,
+            project_globals.ATTENDED_LAST_SCREENING,
+        ] + [f'{state}_event_time' for state in project_globals.BREAST_CANCER_MODEL_STATES]
         self.population_view = builder.population.get_view(columns_required)
 
         # keys will become column names in the output
-        self.pipelines = {
-            'ldl': builder.value.get_value('high_ldl_cholesterol.exposure'),
-            'fpg': builder.value.get_value('high_fasting_plasma_glucose_continuous.exposure'),
-            'sbp': builder.value.get_value('high_systolic_blood_pressure.exposure'),
-            'ikf': builder.value.get_value('impaired_kidney_function.exposure'),
-            'healthcare_utilization_rate': builder.value.get_value('utilization_rate'),
-        }
+        self.pipelines = {}
 
         # record on time_step__prepare to make sure all pipelines + state table
         # columns are reflective of same time
-        builder.event.register_listener('time_step__prepare', self.on_time_step__prepare)
+        builder.event.register_listener('time_step__cleanup', self.on_time_step_cleanup)
         builder.event.register_listener('simulation_end', self.on_simulation_end)
 
     def on_initialize_simulants(self, pop_data):
@@ -471,7 +464,7 @@ class SampleHistoryObserver:
         priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
         self.sample_index = pd.Index(priority_index[:sample_size])
 
-    def on_time_step__prepare(self, event):
+    def on_time_step_cleanup(self, event):
         pop = self.population_view.get(self.sample_index)
 
         pipeline_results = []
@@ -481,25 +474,21 @@ class SampleHistoryObserver:
             pipeline_results.append(values)
 
         record = pd.concat(pipeline_results + [pop], axis=1)
-        record['time'] = self.clock()
+        record.loc[:, 'date'] = self.clock()
 
-        # Get untreated LDL
-        record['untreated_ldl'] = (
-                self.pipelines['ldl'].source(self.sample_index) / (1 - pop['initial_treatment_proportion_reduction'])
-        )
-
-        # Get doctor visits this time step
-        record[project_globals.BACKGROUND_VISIT] = pop[project_globals.DOCTOR_VISIT] == project_globals.BACKGROUND_VISIT
-        record[project_globals.FOLLOW_UP_VISIT] = pop[project_globals.DOCTOR_VISIT] == project_globals.FOLLOW_UP_VISIT
-        del record[project_globals.DOCTOR_VISIT]
+        # Get screenings scheduled and attended this timestep
+        record.loc[:, 'scheduled_screening'] = (pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE]
+                                                > self.clock() - self.step_size())
+        record.loc[:, 'attended_screening'] = (record.loc[:, 'scheduled_screening']
+                                               & pop.loc[:, project_globals.ATTENDED_LAST_SCREENING])
+        del record[project_globals.PREVIOUS_SCREENING_DATE]
+        del record[project_globals.ATTENDED_LAST_SCREENING]
 
         record.index.rename("simulant", inplace=True)
-        record.set_index('time', append=True, inplace=True)
-
+        record.set_index('date', append=True, inplace=True)
         self.history_snapshots.append(record)
 
     def on_simulation_end(self, event):
-        self.on_time_step__prepare(event)  # record once more since we were recording at the beginning of each time step
         sample_history = pd.concat(self.history_snapshots, axis=0)
         sample_history.to_hdf(self.sample_history_parameters.path, key='trajectories')
 

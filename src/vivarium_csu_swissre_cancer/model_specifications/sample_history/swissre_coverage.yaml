@@ -1,0 +1,80 @@
+components:
+    vivarium_public_health:
+        population:
+            - BasePopulation()
+            - Mortality()
+        risks:
+            - Risk('risk_factor.family_history')
+
+            - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.incidence_rate')
+            - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.incidence_rate')
+
+    vivarium_csu_swissre_cancer.components:
+        - BreastCancer()
+        - ScreeningAlgorithm()
+        - TreatmentEffect()
+
+        - SampleHistoryObserver()
+
+configuration:
+    input_data:
+        location: SwissRE Coverage
+        input_draw_number: 0
+        artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_cancer/swissre_coverage.hdf
+    interpolation:
+        order: 0
+        # TODO change to False once we have data for all dates
+        extrapolate: True
+    randomness:
+        map_size: 1_000_000
+        key_columns: ['entrance_time', 'age']
+        random_seed: 0
+    time:
+        start:
+            year: 2020
+            month: 1
+            day: 1
+        end:
+            year: 2039
+            month: 12
+            day: 31
+        step_size: 36.5 # Days
+    population:
+        population_size: 1000
+        age_start: 15
+        age_end: 95
+
+    family_history:
+        exposure: 0.02
+
+    effect_of_family_history_on_lobular_carcinoma_in_situ:
+        incidence_rate:
+            relative_risk: 1.9
+    effect_of_family_history_on_ductal_carcinoma_in_situ:
+        incidence_rate:
+            relative_risk: 1.9
+
+    screening_algorithm:
+        scenario: 'baseline'
+
+    metrics:
+        disability:
+            by_age: False
+            by_sex: True
+            by_year: True
+        mortality:
+            by_age: False
+            by_sex: True
+            by_year: True
+        breast_cancer:
+            by_age: False
+            by_sex: True
+            by_year: True
+        screening_result:
+            by_age: False
+            by_sex: True
+            by_year: True
+        screening:
+            by_age: False
+            by_sex: True
+            by_year: True
