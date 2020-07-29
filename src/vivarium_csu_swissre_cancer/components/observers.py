@@ -414,8 +414,7 @@ class SampleHistoryObserver:
         'metrics': {
             'sample_history_observer': {
                 'sample_size': 1000,
-                # 'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
-                'path': '/home/rmudambi/scratch/sample_history.hdf'
+                'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
             }
         }
     }
@@ -449,7 +448,9 @@ class SampleHistoryObserver:
         self.population_view = builder.population.get_view(columns_required)
 
         # keys will become column names in the output
-        self.pipelines = {}
+        self.pipelines = {
+            'family_history': builder.value.get_value('family_history.exposure')
+        }
 
         # record on time_step__prepare to make sure all pipelines + state table
         # columns are reflective of same time
