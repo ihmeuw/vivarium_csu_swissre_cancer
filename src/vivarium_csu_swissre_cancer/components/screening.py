@@ -200,23 +200,36 @@ class ScreeningAlgorithm:
 
     def _do_screening(self, pop: pd.Series) -> pd.Series:
         """Perform screening for all simulants who attended their screening"""
+        screened = (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
         family_history = self.family_history(pop.index) == 'cat1'
-        has_lcis_dcis = self._has_lcis_dcis(pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME])
+        in_remission = pop.loc[:, project_globals.BREAST_CANCER_MODEL_NAME] == project_globals.RECOVERED_STATE_NAME
+        has_lcis_dcis = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME].isin([
+            project_globals.POSITIVE_LCIS_STATE_NAME,
+            project_globals.POSITIVE_DCIS_STATE_NAME
+        ])
 
-        mri = family_history & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
+        screened_remission = screened & in_remission
+        mri = screened & family_history
         ultrasound = ~family_history & has_lcis_dcis & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 45)
         mammogram_ultrasound = ~family_history & has_lcis_dcis & (45 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
-        mammogram = ~family_history & ~has_lcis_dcis & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
+        mammogram = screened & ~family_history & ~has_lcis_dcis
 
         # Get sensitivity values for all individuals
         # TODO address different sensitivity values for tests of different conditions
         sensitivity = pd.Series(0.0, index=pop.index)
-        sensitivity.loc[mri] = self.screening_parameters[project_globals.SCREENING.MRI_SENSITIVITY.name]
-        sensitivity.loc[ultrasound] = self.screening_parameters[project_globals.SCREENING.ULTRASOUND_SENSITIVITY.name]
-        sensitivity.loc[mammogram_ultrasound] = self.screening_parameters[
+        sensitivity.loc[screened_remission] = self.screening_parameters[
+            project_globals.SCREENING.REMISSION_SENSITIVITY.name
+        ]
+        sensitivity.loc[~in_remission & mri] = self.screening_parameters[project_globals.SCREENING.MRI_SENSITIVITY.name]
+        sensitivity.loc[~in_remission & ultrasound] = self.screening_parameters[
+            project_globals.SCREENING.ULTRASOUND_SENSITIVITY.name
+        ]
+        sensitivity.loc[~in_remission & mammogram_ultrasound] = self.screening_parameters[
             project_globals.SCREENING.MAMMOGRAM_ULTRASOUND_SENSITIVITY.name
         ]
-        sensitivity.loc[mammogram] = self.screening_parameters[project_globals.SCREENING.MAMMOGRAM_SENSITIVITY.name]
+        sensitivity.loc[~in_remission & mammogram] = self.screening_parameters[
+            project_globals.SCREENING.MAMMOGRAM_SENSITIVITY.name
+        ]
 
         # TODO add in specificity if the specificity ever changes from 100%
 
@@ -233,20 +246,15 @@ class ScreeningAlgorithm:
 
     def _schedule_screening(self, previous_screening: pd.Series, screening_result: pd.Series) -> pd.Series:
         """Schedules follow up visits."""
-        has_lcis_dcis = self._has_lcis_dcis(screening_result)
+        has_had_lcis_dcis = screening_result != project_globals.NEGATIVE_STATE_NAME
         draw = self.randomness.get_draw(previous_screening.index, 'schedule_next')
 
         time_to_next_screening = pd.Series(None, previous_screening.index)
-        time_to_next_screening.loc[has_lcis_dcis] = pd.to_timedelta(
+        time_to_next_screening.loc[has_had_lcis_dcis] = pd.to_timedelta(
             pd.Series(project_globals.DAYS_UNTIL_NEXT_ANNUAL.ppf(draw), index=draw.index), unit='day'
-        ).loc[has_lcis_dcis]
-        time_to_next_screening.loc[~has_lcis_dcis] = pd.to_timedelta(
+        ).loc[has_had_lcis_dcis]
+        time_to_next_screening.loc[~has_had_lcis_dcis] = pd.to_timedelta(
             pd.Series(project_globals.DAYS_UNTIL_NEXT_BIENNIAL.ppf(draw), index=draw.index), unit='day'
-        ).loc[~has_lcis_dcis]
+        ).loc[~has_had_lcis_dcis]
 
         return previous_screening + time_to_next_screening.astype('timedelta64[ns]')
-
-    @staticmethod
-    def _has_lcis_dcis(screening_result: pd.Series) -> pd.Series:
-        return screening_result.isin([project_globals.POSITIVE_LCIS_STATE_NAME,
-                                      project_globals.POSITIVE_DCIS_STATE_NAME])

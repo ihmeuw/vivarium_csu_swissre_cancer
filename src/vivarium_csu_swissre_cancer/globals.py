@@ -88,6 +88,8 @@ class __BreastCancer(NamedTuple):
     LCIS_PREVALENCE_RATIO = TargetString('sequela.lobular_carcinoma_in_situ.prevalence_ratio')
     DCIS_PREVALENCE_RATIO = TargetString('sequela.ductal_carcinoma_in_situ.prevalence_ratio')
 
+    REMISSION_RATE_VALUE = 0.1
+
     @property
     def name(self):
         return 'breast_cancer'
@@ -119,6 +121,9 @@ SCREENING_ATTENDANCE_PROBABILITY_END = 0.75
 
 
 class __Screening(NamedTuple):
+    REMISSION_SENSITIVITY: TruncnormDist = TruncnormDist('remission_sensitivity', 1.0, 0.0)
+    REMISSION_SPECIFICITY: TruncnormDist = TruncnormDist('remission_specificity', 1.0, 0.0)
+
     MAMMOGRAM_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_sensitivity', 0.848, 0.00848)
     MAMMOGRAM_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_specificity', 1.0, 0.0)
 
@@ -187,17 +192,20 @@ SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{BREAST_CANCER_MODEL_NAME}'
 LCIS_STATE_NAME = 'lobular_carcinoma_in_situ'
 DCIS_STATE_NAME = 'ductal_carcinoma_in_situ'
 BREAST_CANCER_STATE_NAME = 'breast_cancer'
+RECOVERED_STATE_NAME = f'recovered_from_{BREAST_CANCER_MODEL_NAME}'
 BREAST_CANCER_MODEL_STATES = (
     SUSCEPTIBLE_STATE_NAME,
     LCIS_STATE_NAME,
     DCIS_STATE_NAME,
-    BREAST_CANCER_STATE_NAME
+    BREAST_CANCER_STATE_NAME,
+    RECOVERED_STATE_NAME,
 )
 BREAST_CANCER_MODEL_TRANSITIONS = (
     TransitionString(f'{SUSCEPTIBLE_STATE_NAME}_TO_{LCIS_STATE_NAME}'),
     TransitionString(f'{SUSCEPTIBLE_STATE_NAME}_TO_{DCIS_STATE_NAME}'),
     TransitionString(f'{DCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
     TransitionString(f'{LCIS_STATE_NAME}_TO_{BREAST_CANCER_STATE_NAME}'),
+    TransitionString(f'{BREAST_CANCER_STATE_NAME}_TO_{RECOVERED_STATE_NAME}')
 )
 
 
@@ -206,6 +214,7 @@ NEGATIVE_STATE_NAME = 'negative_screening'
 POSITIVE_LCIS_STATE_NAME = 'positive_screening_lobular_carcinoma_in_situ'
 POSITIVE_DCIS_STATE_NAME = 'positive_screening_ductal_carcinoma_in_situ'
 POSITIVE_BREAST_CANCER_STATE_NAME = 'positive_screening_breast_cancer'
+REMISSION_STATE_NAME = 'remission'
 SCREENING_MODEL_STATES = (
     NEGATIVE_STATE_NAME,
     POSITIVE_LCIS_STATE_NAME,
@@ -218,12 +227,10 @@ SCREENING_MODEL_TRANSITIONS = (
     TransitionString(f'{NEGATIVE_STATE_NAME}_TO_{POSITIVE_BREAST_CANCER_STATE_NAME}'),
     TransitionString(f'{POSITIVE_DCIS_STATE_NAME}_TO_{POSITIVE_BREAST_CANCER_STATE_NAME}'),
     TransitionString(f'{POSITIVE_LCIS_STATE_NAME}_TO_{POSITIVE_BREAST_CANCER_STATE_NAME}'),
-
-    # there are no false positives
-    # TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{NEGATIVE_STATE_NAME}'),
-    # TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{NEGATIVE_STATE_NAME}'),
-    # TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{POSITIVE_LCIS_STATE_NAME}'),
-    # TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{POSITIVE_DCIS_STATE_NAME}'),
+    TransitionString(f'{NEGATIVE_STATE_NAME}_TO_{REMISSION_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_LCIS_STATE_NAME}_TO_{REMISSION_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_DCIS_STATE_NAME}_TO_{REMISSION_STATE_NAME}'),
+    TransitionString(f'{POSITIVE_BREAST_CANCER_STATE_NAME}_TO_{REMISSION_STATE_NAME}'),
 )
 
 STATE_MACHINE_MAP = {
@@ -245,6 +252,7 @@ def get_screened_state(breast_cancer_model_state: str) -> str:
         LCIS_STATE_NAME: POSITIVE_LCIS_STATE_NAME,
         DCIS_STATE_NAME: POSITIVE_DCIS_STATE_NAME,
         BREAST_CANCER_STATE_NAME: POSITIVE_BREAST_CANCER_STATE_NAME,
+        RECOVERED_STATE_NAME: REMISSION_STATE_NAME,
     }[breast_cancer_model_state]
 
 

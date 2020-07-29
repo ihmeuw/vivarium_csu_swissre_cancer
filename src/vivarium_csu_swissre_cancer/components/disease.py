@@ -1,5 +1,5 @@
 from vivarium_public_health.disease import (DiseaseState as DiseaseState_, DiseaseModel, SusceptibleState,
-                                            RateTransition as RateTransition_)
+                                            RateTransition as RateTransition_, RecoveredState)
 
 from vivarium_csu_swissre_cancer import globals as project_globals
 
@@ -54,6 +54,7 @@ def BreastCancer():
             'disability_weight': lambda *_: 0,
         },
     )
+    recovered = RecoveredState(project_globals.BREAST_CANCER_MODEL_NAME)
 
     # Add transitions for Susceptible state
     susceptible.allow_self_transitions()
@@ -96,5 +97,16 @@ def BreastCancer():
 
     # Add transitions for Breast Cancer state
     breast_cancer.allow_self_transitions()
+    breast_cancer.add_transition(
+        recovered,
+        source_data_type='rate',
+        get_data_functions={
+            'transition_rate':
+                lambda *_: project_globals.BREAST_CANCER.REMISSION_RATE_VALUE
+        }
+    )
 
-    return DiseaseModel('breast_cancer', states=[susceptible, dcis, lcis, breast_cancer])
+    # Add transitions for Recovered state
+    recovered.allow_self_transitions()
+
+    return DiseaseModel('breast_cancer', states=[susceptible, dcis, lcis, breast_cancer, recovered])
