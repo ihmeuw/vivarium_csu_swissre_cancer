@@ -12,7 +12,7 @@ from vivarium_public_health.metrics.utilities import (get_output_template, get_g
                                                       get_years_lived_with_disability, get_age_bins,
                                                       )
 
-from vivarium_csu_swissre_cancer import globals as project_globals
+from vivarium_csu_swissre_cancer import globals as project_globals, paths
 
 if typing.TYPE_CHECKING:
     from vivarium.framework.engine import Builder
@@ -406,6 +406,92 @@ class ScreeningObserver:
 
     def __repr__(self) -> str:
         return 'ScreeningObserver'
+
+
+class SampleHistoryObserver:
+
+    configuration_defaults = {
+        'metrics': {
+            'sample_history_observer': {
+                'sample_size': 1000,
+                'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
+            }
+        }
+    }
+
+    @property
+    def name(self):
+        return "sample_history_observer"
+
+    def __init__(self):
+        self.history_snapshots = []
+        self.sample_index = None
+
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: 'Builder'):
+        self.clock = builder.time.clock()
+        self.step_size = builder.time.step_size()
+        self.sample_history_parameters = builder.configuration.metrics.sample_history_observer
+        self.randomness = builder.randomness.get_stream("sample_history")
+
+        # sets the sample index
+        builder.population.initializes_simulants(self.on_initialize_simulants, requires_streams=['sample_history'])
+
+        columns_required = [
+            'alive', 'age', 'sex', 'entrance_time', 'exit_time',
+            project_globals.BREAST_CANCER_MODEL_NAME,
+            project_globals.SCREENING_RESULT_MODEL_NAME,
+            'cause_of_death',
+            project_globals.PREVIOUS_SCREENING_DATE,
+            project_globals.ATTENDED_LAST_SCREENING,
+        ] + [f'{state}_event_time' for state in project_globals.BREAST_CANCER_MODEL_STATES]
+        self.population_view = builder.population.get_view(columns_required)
+
+        # keys will become column names in the output
+        self.pipelines = {
+            'family_history': builder.value.get_value('family_history.exposure')
+        }
+
+        # record on time_step__prepare to make sure all pipelines + state table
+        # columns are reflective of same time
+        builder.event.register_listener('time_step__cleanup', self.on_time_step_cleanup)
+        builder.event.register_listener('simulation_end', self.on_simulation_end)
+
+    def on_initialize_simulants(self, pop_data):
+        sample_size = self.sample_history_parameters.sample_size
+        if sample_size is None or sample_size > len(pop_data.index):
+            sample_size = len(pop_data.index)
+        draw = self.randomness.get_draw(pop_data.index)
+        priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
+        self.sample_index = pd.Index(priority_index[:sample_size])
+
+    def on_time_step_cleanup(self, event):
+        pop = self.population_view.get(self.sample_index)
+
+        pipeline_results = []
+        for name, pipeline in self.pipelines.items():
+            values = pipeline(self.sample_index)
+            values = values.rename(name)
+            pipeline_results.append(values)
+
+        record = pd.concat(pipeline_results + [pop], axis=1)
+        record.loc[:, 'date'] = self.clock()
+
+        # Get screenings scheduled and attended this timestep
+        record.loc[:, 'scheduled_screening'] = (pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE]
+                                                > self.clock() - self.step_size())
+        record.loc[:, 'attended_screening'] = (record.loc[:, 'scheduled_screening']
+                                               & pop.loc[:, project_globals.ATTENDED_LAST_SCREENING])
+        del record[project_globals.PREVIOUS_SCREENING_DATE]
+        del record[project_globals.ATTENDED_LAST_SCREENING]
+
+        record.index.rename("simulant", inplace=True)
+        record.set_index('date', append=True, inplace=True)
+        self.history_snapshots.append(record)
+
+    def on_simulation_end(self, event):
+        sample_history = pd.concat(self.history_snapshots, axis=0)
+        sample_history.to_hdf(self.sample_history_parameters.path, key='trajectories')
 
 
 def get_state_person_time(pop: pd.DataFrame, config: Dict[str, bool],

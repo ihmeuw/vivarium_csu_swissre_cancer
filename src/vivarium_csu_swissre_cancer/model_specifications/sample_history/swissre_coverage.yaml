@@ -14,18 +14,13 @@ components:
         - ScreeningAlgorithm()
         - TreatmentEffect()
 
-        - MortalityObserver()
-        - DisabilityObserver()
-        - DiseaseObserver('breast_cancer')
-        - DiseaseObserver('screening_result')
-        - ScreeningObserver()
-        #- SampleHistoryObserver()
+        - SampleHistoryObserver()
 
 configuration:
     input_data:
-        location: {{ location_proper }}
+        location: SwissRE Coverage
         input_draw_number: 0
-        artifact_path: {{ artifact_directory }}/{{ location_sanitized }}.hdf
+        artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_cancer/swissre_coverage.hdf
     interpolation:
         order: 0
         # TODO change to False once we have data for all dates
@@ -45,7 +40,7 @@ configuration:
             day: 31
         step_size: 36.5 # Days
     population:
-        population_size: 200000
+        population_size: 1000
         age_start: 15
         age_end: 95
 
@@ -83,4 +78,3 @@ configuration:
             by_age: False
             by_sex: True
             by_year: True
-
