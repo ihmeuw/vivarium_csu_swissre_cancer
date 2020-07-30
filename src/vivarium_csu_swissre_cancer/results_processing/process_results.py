@@ -116,6 +116,7 @@ def sort_data(data):
 
 
 def split_processing_column(data):
+    data['process'], data['family_history'] = data.process.str.split('_family_history_').str
     data['process'], data['age_cohort'] = data.process.str.split('_age_cohort_').str
     data['process'], data['sex'] = data.process.str.split('_among_').str
     data['year'] = data.process.str.split('_in_').str[-1]
