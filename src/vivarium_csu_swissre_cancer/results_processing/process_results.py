@@ -115,7 +115,9 @@ def sort_data(data):
     return data.reset_index(drop=True)
 
 
-def split_processing_column(data):
+def split_processing_column(data, has_screening_stratification=False):
+    if has_screening_stratification:
+        data['process'], data['screening_result'] = data.process.str.split('_screening_result_').str
     data['process'], data['family_history'] = data.process.str.split('_family_history_').str
     data['process'], data['age_cohort'] = data.process.str.split('_age_cohort_').str
     data['process'], data['sex'] = data.process.str.split('_among_').str
@@ -132,14 +134,14 @@ def get_population_data(data):
     return sort_data(total_pop)
 
 
-def get_measure_data(data, measure):
+def get_measure_data(data, measure, has_screening_stratification=False):
     data = pivot_data(data[project_globals.RESULT_COLUMNS(measure) + GROUPBY_COLUMNS])
-    data = split_processing_column(data)
+    data = split_processing_column(data, has_screening_stratification=False)
     return sort_data(data)
 
 
-def get_by_cause_measure_data(data, measure):
-    data = get_measure_data(data, measure)
+def get_by_cause_measure_data(data, measure, has_screening_stratification=False):
+    data = get_measure_data(data, measure, has_screening_stratification)
     data['measure'], data['cause'] = data.measure.str.split('_due_to_').str
     return sort_data(data)
 
