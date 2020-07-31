@@ -29,10 +29,10 @@ OUTPUT_COLUMN_SORT_ORDER = [
 def make_measure_data(data):
     measure_data = MeasureData(
         population=get_population_data(data),
-        person_time=get_measure_data(data, 'person_time'),
-        ylls=get_by_cause_measure_data(data, 'ylls'),
+        person_time=get_measure_data(data, 'person_time', True),
+        ylls=get_by_cause_measure_data(data, 'ylls', True),
         ylds=get_by_cause_measure_data(data, 'ylds'),
-        deaths=get_by_cause_measure_data(data, 'deaths'),
+        deaths=get_by_cause_measure_data(data, 'deaths', True),
         state_person_time=get_state_person_time_measure_data(data),
         transition_count=get_transition_count_measure_data(data),
         event_count=get_measure_data(data, 'event_count'),
