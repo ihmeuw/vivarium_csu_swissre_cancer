@@ -52,7 +52,7 @@ class ScreeningAlgorithm:
 
         self.family_history = builder.value.get_value('family_history.exposure')
 
-        required_columns = [AGE, SEX, project_globals.BREAST_CANCER_MODEL_NAME]
+        required_columns = [AGE, SEX, project_globals.BREAST_CANCER_MODEL_NAME, 'family_history_propensity']
         columns_created = [
             project_globals.SCREENING_RESULT_MODEL_NAME,
             project_globals.ATTENDED_LAST_SCREENING,
@@ -80,6 +80,7 @@ class ScreeningAlgorithm:
         screening_result = pd.Series(project_globals.NEGATIVE_STATE_NAME,
                                      index=pop.index,
                                      name=project_globals.SCREENING_RESULT_MODEL_NAME)
+        family_history = self.family_history(pop.index) == 'cat1'
 
         female_under_30 = (pop.loc[:, SEX] == 'Female') & (pop.loc[:, AGE] < 30)
         female_under_70 = (pop.loc[:, SEX] == 'Female') & (pop.loc[:, AGE] < 70)
@@ -95,7 +96,8 @@ class ScreeningAlgorithm:
         )
 
         # Draw a duration between screenings to use for scheduling the first screening
-        time_between_screenings = self._schedule_screening(screening_start, screening_result) - screening_start
+        time_between_screenings = (self._schedule_screening(screening_start, screening_result, family_history)
+                                   - screening_start)
 
         # Determine how far along between screenings we are the time screening starts
         progress_to_next_screening = self.randomness.get_draw(pop.index, 'progress_to_next_screening')
@@ -147,7 +149,8 @@ class ScreeningAlgorithm:
         next_screening = pop.loc[:, project_globals.NEXT_SCREENING_DATE].copy()
         next_screening.loc[screening_scheduled] = self._schedule_screening(
             pop.loc[screening_scheduled, project_globals.NEXT_SCREENING_DATE],
-            screening_result.loc[screening_scheduled]
+            screening_result.loc[screening_scheduled],
+            self.family_history(pop.index) == 'cat1'
         )
 
         # Update values
@@ -244,17 +247,19 @@ class ScreeningAlgorithm:
         )
         return screening_result
 
-    def _schedule_screening(self, previous_screening: pd.Series, screening_result: pd.Series) -> pd.Series:
+    def _schedule_screening(self, previous_screening: pd.Series, screening_result: pd.Series,
+                            family_history: pd.Series) -> pd.Series:
         """Schedules follow up visits."""
-        has_had_lcis_dcis = screening_result != project_globals.NEGATIVE_STATE_NAME
+        has_had_lcis_dcis = (screening_result != project_globals.NEGATIVE_STATE_NAME)
+        annual_screening = has_had_lcis_dcis | family_history
         draw = self.randomness.get_draw(previous_screening.index, 'schedule_next')
 
         time_to_next_screening = pd.Series(None, previous_screening.index)
-        time_to_next_screening.loc[has_had_lcis_dcis] = pd.to_timedelta(
+        time_to_next_screening.loc[annual_screening] = pd.to_timedelta(
             pd.Series(project_globals.DAYS_UNTIL_NEXT_ANNUAL.ppf(draw), index=draw.index), unit='day'
-        ).loc[has_had_lcis_dcis]
-        time_to_next_screening.loc[~has_had_lcis_dcis] = pd.to_timedelta(
+        ).loc[annual_screening]
+        time_to_next_screening.loc[~annual_screening] = pd.to_timedelta(
             pd.Series(project_globals.DAYS_UNTIL_NEXT_BIENNIAL.ppf(draw), index=draw.index), unit='day'
-        ).loc[~has_had_lcis_dcis]
+        ).loc[~annual_screening]
 
         return previous_screening + time_to_next_screening.astype('timedelta64[ns]')
