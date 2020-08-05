@@ -136,7 +136,7 @@ def get_population_data(data):
 
 def get_measure_data(data, measure, has_screening_stratification=False):
     data = pivot_data(data[project_globals.RESULT_COLUMNS(measure) + GROUPBY_COLUMNS])
-    data = split_processing_column(data, has_screening_stratification=False)
+    data = split_processing_column(data, has_screening_stratification)
     return sort_data(data)
 
 
@@ -147,7 +147,7 @@ def get_by_cause_measure_data(data, measure, has_screening_stratification=False)
 
 
 def get_state_person_time_measure_data(data):
-    data = get_measure_data(data, 'state_person_time')
+    data = get_measure_data(data, 'state_person_time', True)
     data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
