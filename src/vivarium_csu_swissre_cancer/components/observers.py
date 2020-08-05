@@ -252,12 +252,12 @@ class DiseaseObserver:
         }
     }
 
-    def __init__(self, disease: str):
+    def __init__(self, disease: str, stratify_by_screening_state: str = 'False'):
         self.disease = disease
         self.configuration_defaults = {
             'metrics': {disease: DiseaseObserver.configuration_defaults['metrics']['disease']}
         }
-        self.stratifier = ResultsStratifier(self.name)
+        self.stratifier = ResultsStratifier(self.name, stratify_by_screening_state == 'True')
 
     @property
     def name(self) -> str:
