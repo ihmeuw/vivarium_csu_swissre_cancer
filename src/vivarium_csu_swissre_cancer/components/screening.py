@@ -119,7 +119,7 @@ class ScreeningAlgorithm:
     def on_time_step(self, event: 'Event'):
         """Determine if someone will go for a screening"""
         # Get all simulants with a screening scheduled during this timestep
-        pop = self.population_view.get(event.index)
+        pop = self.population_view.get(event.index, query='alive == "alive"')
         screening_scheduled = pop.loc[:, project_globals.NEXT_SCREENING_DATE] < self.clock()
 
         # Get probability of attending the next screening for scheduled simulants
