@@ -16,7 +16,7 @@ components:
 
         - MortalityObserver()
         - DisabilityObserver()
-        - DiseaseObserver('breast_cancer')
+        - DiseaseObserver('breast_cancer', 'True')
         - DiseaseObserver('screening_result')
         - ScreeningObserver()
         #- SampleHistoryObserver()
@@ -40,7 +40,7 @@ configuration:
             month: 1
             day: 1
         end:
-            year: 2039
+            year: 2040
             month: 12
             day: 31
         step_size: 36.5 # Days
