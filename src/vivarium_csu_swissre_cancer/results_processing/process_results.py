@@ -33,7 +33,7 @@ def make_measure_data(data):
         ylls=get_by_cause_measure_data(data, 'ylls', True),
         ylds=get_by_cause_measure_data(data, 'ylds'),
         deaths=get_by_cause_measure_data(data, 'deaths', True),
-        disease_state_person_time=get_state_person_time_measure_data(data, 'disease_state_person_time'),
+        disease_state_person_time=get_state_person_time_measure_data(data, 'disease_state_person_time', True),
         screening_state_person_time=get_state_person_time_measure_data(data, 'screening_state_person_time'),
         transition_count=get_transition_count_measure_data(data),
         event_count=get_measure_data(data, 'event_count'),
@@ -148,8 +148,8 @@ def get_by_cause_measure_data(data, measure, has_screening_stratification=False)
     return sort_data(data)
 
 
-def get_state_person_time_measure_data(data, measure):
-    data = get_measure_data(data, measure, True)
+def get_state_person_time_measure_data(data, measure, has_screening_stratification=False):
+    data = get_measure_data(data, measure, has_screening_stratification)
     data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
