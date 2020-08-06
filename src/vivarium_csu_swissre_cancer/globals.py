@@ -297,8 +297,10 @@ YLLS_COLUMN_TEMPLATE = ('ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_age_
                         '_family_history_{HISTORY}_screening_result_{SCREENING_STATE}')
 YLDS_COLUMN_TEMPLATE = ('ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
                         '_family_history_{HISTORY}')
-STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-                                     '_family_history_{HISTORY}')
+DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{DISEASE_STATE}_person_time_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                                             '_family_history_{HISTORY}_screening_result_{SCREENING_STATE}')
+SCREENING_STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{SCREENING_STATE}_person_time_in_{YEAR}_among_{SEX}'
+                                               '_age_cohort_{AGE_COHORT}_family_history_{HISTORY}')
 TRANSITION_COUNT_COLUMN_TEMPLATE = ('{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
                                     '_family_history_{HISTORY}')
 EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
@@ -309,7 +311,8 @@ COLUMN_TEMPLATES = {
     'deaths': DEATH_COLUMN_TEMPLATE,
     'ylls': YLLS_COLUMN_TEMPLATE,
     'ylds': YLDS_COLUMN_TEMPLATE,
-    'state_person_time': STATE_PERSON_TIME_COLUMN_TEMPLATE,
+    'disease_state_person_time': DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE,
+    'screening_state_person_time': SCREENING_STATE_PERSON_TIME_COLUMN_TEMPLATE,
     'transition_count': TRANSITION_COUNT_COLUMN_TEMPLATE,
     'event_count': EVENT_COUNT_COLUMN_TEMPLATE,
 }
@@ -333,7 +336,7 @@ TEMPLATE_FIELD_MAP = {
     'AGE_COHORT': AGE_COHORTS,
     'CAUSE_OF_DEATH': CAUSES_OF_DEATH,
     'CAUSE_OF_DISABILITY': CAUSES_OF_DISABILITY,
-    'STATE': STATES,
+    'DISEASE_STATE': BREAST_CANCER_MODEL_STATES,
     'TRANSITION': TRANSITIONS,
     'EVENT': EVENTS,
     'HISTORY': FAMILY_HISTORY_STATE,
