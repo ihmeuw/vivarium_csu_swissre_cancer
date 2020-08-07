@@ -301,10 +301,11 @@ DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{DISEASE_STATE}_person_time_in_{YE
                                              '_family_history_{HISTORY}_screening_result_{SCREENING_STATE}')
 SCREENING_STATE_PERSON_TIME_COLUMN_TEMPLATE = ('{SCREENING_STATE}_person_time_in_{YEAR}_among_{SEX}'
                                                '_age_cohort_{AGE_COHORT}_family_history_{HISTORY}')
-DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-                                            '_family_history_{HISTORY}_screening_result_{SCREENING_STATE}')
-SCREENING_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
-                                              '_family_history_{HISTORY}')
+DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{DISEASE_TRANSITION}_event_count_in_{YEAR}_among_{SEX}'
+                                            '_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
+                                            '_screening_result_{SCREENING_STATE}')
+SCREENING_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{SCREENING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}'
+                                              '_age_cohort_{AGE_COHORT}_family_history_{HISTORY}')
 EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
 
 COLUMN_TEMPLATES = {
