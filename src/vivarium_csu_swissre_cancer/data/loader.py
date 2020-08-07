@@ -161,11 +161,11 @@ def load_acmr(key: str, location: str) -> pd.DataFrame:
 
 def load_prevalence(key: str, location: str) -> pd.DataFrame:
     base_prevalence = _transform_raw_data(location, paths.RAW_PREVALENCE_DATA_PATH, True)
-    prevalence_ratio = 1
-    if key == project_globals.BREAST_CANCER.LCIS_PREVALENCE:
-        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
-    elif key == project_globals.BREAST_CANCER.DCIS_PREVALENCE:
-        prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
+    prevalence_ratio = 0
+    # if key == project_globals.BREAST_CANCER.LCIS_PREVALENCE:
+    #     prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.LCIS_PREVALENCE_RATIO, location)
+    # elif key == project_globals.BREAST_CANCER.DCIS_PREVALENCE:
+    #     prevalence_ratio = _get_prevalence_ratio(project_globals.BREAST_CANCER.DCIS_PREVALENCE_RATIO, location)
     return base_prevalence * prevalence_ratio
 
 
