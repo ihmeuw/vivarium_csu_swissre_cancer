@@ -33,8 +33,10 @@ def make_measure_data(data):
         ylls=get_by_cause_measure_data(data, 'ylls', True),
         ylds=get_by_cause_measure_data(data, 'ylds'),
         deaths=get_by_cause_measure_data(data, 'deaths', True),
-        state_person_time=get_state_person_time_measure_data(data),
-        transition_count=get_transition_count_measure_data(data),
+        disease_state_person_time=get_state_person_time_measure_data(data, 'disease_state_person_time', True),
+        screening_state_person_time=get_state_person_time_measure_data(data, 'screening_state_person_time'),
+        disease_transition_count=get_transition_count_measure_data(data, 'disease_transition_count', True),
+        screening_transition_count=get_transition_count_measure_data(data, 'screening_transition_count'),
         event_count=get_measure_data(data, 'event_count'),
     )
     return measure_data
@@ -46,8 +48,10 @@ class MeasureData(NamedTuple):
     ylls: pd.DataFrame
     ylds: pd.DataFrame
     deaths: pd.DataFrame
-    state_person_time: pd.DataFrame
-    transition_count: pd.DataFrame
+    disease_state_person_time: pd.DataFrame
+    screening_state_person_time: pd.DataFrame
+    disease_transition_count: pd.DataFrame
+    screening_transition_count: pd.DataFrame
     event_count: pd.DataFrame
 
     def dump(self, output_dir: Path):
@@ -146,14 +150,14 @@ def get_by_cause_measure_data(data, measure, has_screening_stratification=False)
     return sort_data(data)
 
 
-def get_state_person_time_measure_data(data):
-    data = get_measure_data(data, 'state_person_time', True)
+def get_state_person_time_measure_data(data, measure, has_screening_stratification=False):
+    data = get_measure_data(data, measure, has_screening_stratification)
     data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
 
-def get_transition_count_measure_data(data):
+def get_transition_count_measure_data(data, measure, has_screening_stratification=False):
     # Oops, edge case.
-    data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2040' in c])
-    data = get_measure_data(data, 'transition_count')
+    data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2041' in c])
+    data = get_measure_data(data, measure, has_screening_stratification)
     return sort_data(data)
