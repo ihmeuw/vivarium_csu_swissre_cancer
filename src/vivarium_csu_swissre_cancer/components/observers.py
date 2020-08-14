@@ -81,32 +81,20 @@ class ResultsStratifier:
                                                  requires_columns=columns_required,
                                                  requires_values=list(self.pipelines.keys()))
 
-        builder.event.register_listener('simulation_end', self.on_simulation_end)
+        builder.event.register_listener('time_step__cleanup', self.on_timestep_cleanup)
 
-    # noinspection PyAttributeOutsideInit
     def on_initialize_simulants(self, pop_data: 'SimulantData'):
-        stratification_groups = pd.Series('', index=pop_data.index)
+        self.set_stratification_groups(pop_data.index)
 
-        self.pipeline_values = {name: pipeline(pop_data.index) for name, pipeline in self.pipelines.items()}
-        self.population_values = self.population_view.get(pop_data.index)
-
-        all_stratifications = self.get_all_stratifications()
-        for stratification in all_stratifications:
-            stratification_group_name = '_'.join([f'{metric["metric"]}_{metric["category"]}'
-                                                  for metric in stratification])
-            mask = pd.Series(True, index=pop_data.index)
-            for metric in stratification:
-                mask &= self.stratification_levels[metric['metric']][metric['category']]()
-            stratification_groups.loc[mask] = stratification_group_name
-
-        self.stratification_groups = stratification_groups
-
-    # noinspection PyAttributeOutsideInit
-    def on_simulation_end(self, event: 'Event'):
+    def on_timestep_cleanup(self, event: 'Event'):
         if self.has_screening_state:
-            self.population_values.loc[project_globals.SCREENING_RESULT_MODEL_NAME] = (
-                self.population_view.get(event.index).loc[:, project_globals.SCREENING_RESULT_MODEL_NAME]
+            # Update screening result state
+            self.population_values.loc[event.index, project_globals.SCREENING_RESULT_MODEL_NAME] = (
+                self.population_view.get(event.index).loc[event.index, project_globals.SCREENING_RESULT_MODEL_NAME]
             )
+
+            # Update stratification groups
+            self.set_stratification_groups(event.index)
 
     def get_all_stratifications(self) -> List[Tuple[Dict[str, str], ...]]:
         """
@@ -122,6 +110,24 @@ class ResultsStratifier:
                   for metric, category_maps in self.stratification_levels.items()]
         # Get product of all stratification combinations
         return list(itertools.product(*groups))
+
+    # noinspection PyAttributeOutsideInit
+    def set_stratification_groups(self, index: pd.Index):
+        stratification_groups = pd.Series('', index=index)
+
+        self.pipeline_values = {name: pipeline(index) for name, pipeline in self.pipelines.items()}
+        self.population_values = self.population_view.get(index)
+
+        all_stratifications = self.get_all_stratifications()
+        for stratification in all_stratifications:
+            stratification_group_name = '_'.join([f'{metric["metric"]}_{metric["category"]}'
+                                                  for metric in stratification])
+            mask = pd.Series(True, index=index)
+            for metric in stratification:
+                mask &= self.stratification_levels[metric['metric']][metric['category']]()
+            stratification_groups.loc[mask] = stratification_group_name
+
+        self.stratification_groups = stratification_groups
 
     @staticmethod
     def get_stratification_key(stratification: Iterable[Dict[str, str]]) -> str:
