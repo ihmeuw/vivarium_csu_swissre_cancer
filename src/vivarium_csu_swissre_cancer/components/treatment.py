@@ -36,7 +36,7 @@ class TreatmentEffect:
         self.population_view = builder.population.get_view(required_columns)
 
         builder.value.register_value_modifier(
-            project_globals.BREAST_CANCER.LCIS_BREAST_CANCER_TRANSITION_RATE,
+            'lobular_carcinoma_in_situ_to_breast_cancer.transition_rate',
             modifier=lambda index, target: self.treat(index, target, project_globals.POSITIVE_LCIS_STATE_NAME),
             # TODO add intermediate pipeline between screening result and treatment to allow for less than full
             #  treatment coverage
@@ -44,7 +44,7 @@ class TreatmentEffect:
         )
 
         builder.value.register_value_modifier(
-            project_globals.BREAST_CANCER.DCIS_BREAST_CANCER_TRANSITION_RATE,
+            'ductal_carcinoma_in_situ_to_breast_cancer.transition_rate',
             modifier=lambda index, target: self.treat(index, target, project_globals.POSITIVE_DCIS_STATE_NAME),
             # TODO add intermediate pipeline between screening result and treatment to allow for less than full
             #  treatment coverage
