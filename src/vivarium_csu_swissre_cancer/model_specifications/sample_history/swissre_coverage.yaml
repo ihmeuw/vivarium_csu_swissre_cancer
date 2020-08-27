@@ -40,7 +40,7 @@ configuration:
             day: 31
         step_size: 36.5 # Days
     population:
-        population_size: 1000
+        population_size: 20000
         age_start: 15
         age_end: 95
 
@@ -78,3 +78,6 @@ configuration:
             by_age: False
             by_sex: True
             by_year: True
+        sample_history_observer:
+            sample_size: 20000
+            path: /share/costeffectiveness/results/vivarium_csu_swissre_cancer/baseline_sample_history.hdf
