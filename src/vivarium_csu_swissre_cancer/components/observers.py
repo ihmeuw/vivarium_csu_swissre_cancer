@@ -1,5 +1,6 @@
 from collections import Counter
 import itertools
+from pathlib import Path
 import typing
 from typing import Dict, Iterable, List, Tuple, Union
 
@@ -418,9 +419,9 @@ class SampleHistoryObserver:
 
     configuration_defaults = {
         'metrics': {
-            'sample_history_observer': {
+            'sample_history': {
                 'sample_size': 1000,
-                'path': f'{paths.RESULTS_ROOT}/sample_history.hdf'
+                'output_root': paths.RESULTS_ROOT
             }
         }
     }
@@ -432,12 +433,18 @@ class SampleHistoryObserver:
     def __init__(self):
         self.history_snapshots = []
         self.sample_index = None
+        self.configuration_defaults = {
+            'metrics': {'sample_history': SampleHistoryObserver.configuration_defaults['metrics']['sample_history']}
+        }
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         self.clock = builder.time.clock()
         self.step_size = builder.time.step_size()
-        self.sample_history_parameters = builder.configuration.metrics.sample_history_observer
+        self.sample_history_parameters = builder.configuration.metrics.sample_history
+        self.output_path = (Path(self.sample_history_parameters.output_root)
+                            / f'{builder.configuration.screening_algorithm.scenario}_sample_history.hdf')
+
         self.randomness = builder.randomness.get_stream("sample_history")
 
         # sets the sample index
@@ -497,7 +504,7 @@ class SampleHistoryObserver:
 
     def on_simulation_end(self, event):
         sample_history = pd.concat(self.history_snapshots, axis=0)
-        sample_history.to_hdf(self.sample_history_parameters.path, key='trajectories')
+        sample_history.to_hdf(self.output_path, key='trajectories')
 
 
 def get_state_person_time(pop: pd.DataFrame, config: Dict[str, bool],
