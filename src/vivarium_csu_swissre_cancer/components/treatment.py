@@ -1,4 +1,5 @@
 """Treatment model."""
+import numpy as np
 import typing
 
 from vivarium_csu_swissre_cancer import globals as project_globals
@@ -24,12 +25,12 @@ class TreatmentEffect:
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         self.clock = builder.time.clock()
-        self.randomness = builder.randomness.get_stream(self.name)
-
         draw = builder.configuration.input_data.input_draw_number
         self.efficacy = {
-            project_globals.POSITIVE_LCIS_STATE_NAME: project_globals.LCIS_TREATMENT_EFFICACY.get_random_variable(draw),
-            project_globals.POSITIVE_DCIS_STATE_NAME: project_globals.DCIS_TREATMENT_EFFICACY.get_random_variable(draw),
+            project_globals.POSITIVE_LCIS_STATE_NAME: (
+                np.exp(project_globals.TREATMENT.LOG_LCIS_EFFICACY.get_random_variable(draw))
+            ),
+            project_globals.POSITIVE_DCIS_STATE_NAME: project_globals.TREATMENT.DCIS_EFFICACY.get_random_variable(draw),
         }
 
         required_columns = [project_globals.SCREENING_RESULT_MODEL_NAME]

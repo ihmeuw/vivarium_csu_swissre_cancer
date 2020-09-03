@@ -1,5 +1,6 @@
 from datetime import datetime
 import itertools
+import math
 from typing import NamedTuple
 
 from vivarium_public_health.utilities import TargetString
@@ -161,10 +162,12 @@ class __Screening(NamedTuple):
 SCREENING = __Screening()
 
 
-LCIS_TREATMENT_EFFICACY: TruncnormDist = TruncnormDist('lcis_treatment_efficacy', 0.95, 0.01, 0.0, 0.99,
-                                                       'treatment_efficacy')
-DCIS_TREATMENT_EFFICACY: TruncnormDist = TruncnormDist('dcis_treatment_efficacy', 0.95, 0.01, 0.0, 0.99,
-                                                       'treatment_efficacy')
+class __Treatment(NamedTuple):
+    LOG_LCIS_EFFICACY: TruncnormDist = TruncnormDist('lcis_treatment_efficacy', math.log(0.44), 0.48, -100.0, 0.0)
+    DCIS_EFFICACY: TruncnormDist = TruncnormDist('dcis_treatment_efficacy', 0.40, 0.05, 0.0, 0.99)
+
+
+TREATMENT = __Treatment()
 
 DAYS_UNTIL_NEXT_ANNUAL = TruncnormDist('days_until_next_annual', 364.0, 156.0, 100.0, 700.0)
 DAYS_UNTIL_NEXT_BIENNIAL = TruncnormDist('days_until_next_biennial', 728.0, 156.0, 200.0, 1400.0)
