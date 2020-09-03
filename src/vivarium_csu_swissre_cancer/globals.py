@@ -166,6 +166,9 @@ class __Treatment(NamedTuple):
     LOG_LCIS_EFFICACY: TruncnormDist = TruncnormDist('lcis_treatment_efficacy', math.log(0.44), 0.48, -100.0, 0.0)
     DCIS_EFFICACY: TruncnormDist = TruncnormDist('dcis_treatment_efficacy', 0.40, 0.05, 0.0, 0.99)
 
+    LCIS_COVERAGE_PARAMS = (0.15, 0.2, 0.25)
+    DCIS_COVERAGE_PARAMS = (0.95, 0.975, 1.0)
+
 
 TREATMENT = __Treatment()
 
