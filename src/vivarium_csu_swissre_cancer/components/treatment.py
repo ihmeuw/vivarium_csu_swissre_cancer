@@ -29,6 +29,8 @@ class TreatmentEffect:
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         self.clock = builder.time.clock()
+        self.randomness = builder.randomness.get_stream(self.name)
+
         draw = builder.configuration.input_data.input_draw_number
 
         self.efficacy = {
@@ -66,9 +68,7 @@ class TreatmentEffect:
         )
 
     def on_initialize_simulants(self, pop_data: 'SimulantData'):
-        propensity = pd.Series(np.random.uniform(size=len(pop_data.index)),
-                               index=pop_data.index,
-                               name=TREATMENT_PROPENSITY)
+        propensity = pd.Series(self.randomness.get_draw(pop_data.index), name=TREATMENT_PROPENSITY)
         self.population_view.update(propensity)
 
     def treat(self, index, target, state_name):
