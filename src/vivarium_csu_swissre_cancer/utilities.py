@@ -65,3 +65,8 @@ def sanitize_location(location: str):
     """
     # FIXME: Should make this a reversible transformation.
     return location.replace(" ", "_").replace("'", "_").lower()
+
+
+def get_triangular_dist_random_variable(min_val: float, mode: float, max_val: float, seed: str, draw: int) -> float:
+    np.random.seed(get_hash(f'{seed}_draw_{draw}'))
+    return np.random.triangular(min_val, mode, max_val)
