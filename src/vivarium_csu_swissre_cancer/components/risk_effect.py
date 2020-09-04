@@ -73,7 +73,7 @@ def get_relative_risk_data(builder, risk: EntityString, target: TargetString, ra
 
 def load_relative_risk_data(builder, risk: EntityString, target: TargetString, randomness: RandomnessStream):
     relative_risk_source = builder.configuration[f'effect_of_{risk.name}_on_{target.name}'][target.measure]
-    parameters = {k: v for k, v in relative_risk_source.items() if v is not None}
+    parameters = {k: v for k, v in relative_risk_source.to_dict().items() if v is not None}
     random_state = np.random.RandomState(randomness.get_seed())
     cat1_value = generate_relative_risk_from_distribution(random_state, parameters)
     relative_risk_data = _make_relative_risk_data(builder, cat1_value)
