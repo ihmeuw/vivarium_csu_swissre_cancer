@@ -1,5 +1,5 @@
-input_draw_count: 100
-random_seed_count: 40
+input_draw_count: 1
+random_seed_count: 400
 
 branches:
   - screening_algorithm:
