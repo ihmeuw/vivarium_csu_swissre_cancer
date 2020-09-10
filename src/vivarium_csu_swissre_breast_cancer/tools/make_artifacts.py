@@ -15,9 +15,9 @@ from typing import Union
 import click
 from loguru import logger
 
-from vivarium_csu_swissre_cancer import globals as project_globals
-from vivarium_csu_swissre_cancer.utilities import sanitize_location
-from vivarium_csu_swissre_cancer.tools.app_logging import add_logging_sink, decode_status
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer.utilities import sanitize_location
+from vivarium_csu_swissre_breast_cancer.tools.app_logging import add_logging_sink, decode_status
 
 
 def build_artifacts(location: str, output_dir: str, append: bool, verbose: int):
@@ -154,7 +154,7 @@ def build_single_location_artifact(path: Union[str, Path], location: str, log_to
         add_logging_sink(log_file, verbose=2)
 
     # Local import to avoid data dependencies
-    from vivarium_csu_swissre_cancer.data import builder
+    from vivarium_csu_swissre_breast_cancer.data import builder
 
     logger.info(f'Building artifact for {location} at {str(path)}.')
     artifact = builder.open_artifact(path, location)

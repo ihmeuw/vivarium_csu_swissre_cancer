@@ -12,7 +12,7 @@ from vivarium_public_health.metrics.utilities import (get_output_template, get_g
                                                       get_years_lived_with_disability, get_age_bins,
                                                       )
 
-from vivarium_csu_swissre_cancer import globals as project_globals, paths
+from vivarium_csu_swissre_breast_cancer import globals as project_globals, paths
 
 if typing.TYPE_CHECKING:
     from vivarium.framework.engine import Builder

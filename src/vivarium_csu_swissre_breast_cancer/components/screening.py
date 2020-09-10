@@ -3,7 +3,7 @@ import typing
 
 import pandas as pd
 
-from vivarium_csu_swissre_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
 
 
 if typing.TYPE_CHECKING:

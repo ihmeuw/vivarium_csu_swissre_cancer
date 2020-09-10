@@ -6,7 +6,7 @@ and locations for which to create model specs and uses jinja2 to
 render model specs with the correct location parameters plugged in.
 
 It will look for the model spec template in "model_spec.in" in the directory
-``src/vivarium_csu_swissre_cancer/model_specifications``.
+``src/vivarium_csu_swissre_breast_cancer/model_specifications``.
 Add location strings to the ``src/globals.py`` file. By default, specifications
 for all locations will be built. You can choose to make a model specification
 for a single location by specifying that location. However, the location
@@ -20,10 +20,10 @@ import click
 from loguru import logger
 from vivarium.framework.utilities import handle_exceptions
 
-from vivarium_csu_swissre_cancer import paths
-import vivarium_csu_swissre_cancer.globals as project_globals
+from vivarium_csu_swissre_breast_cancer import paths
+import vivarium_csu_swissre_breast_cancer.globals as project_globals
 
-from vivarium_csu_swissre_cancer.tools import (build_artifacts, build_model_specifications, build_results,
+from vivarium_csu_swissre_breast_cancer.tools import (build_artifacts, build_model_specifications, build_results,
                                                configure_logging_to_terminal)
 
 
@@ -54,7 +54,7 @@ def make_specs(template: str, location: str, output_dir: str, verbose: int, with
 
     The default template lives here:
 
-    ``src/vivarium_csu_swissre_cancer/model_specification/model_spec.in``
+    ``src/vivarium_csu_swissre_breast_cancer/model_specification/model_spec.in``
     """
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_model_specifications, logger, with_debugger=with_debugger)

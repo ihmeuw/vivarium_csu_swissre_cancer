@@ -1,8 +1,8 @@
 ===============================
-vivarium_csu_swissre_cancer
+vivarium_csu_swissre_breast_cancer
 ===============================
 
-Research repository for the vivarium_csu_swissre_cancer project.
+Research repository for the vivarium_csu_swissre_breast_cancer project.
 
 .. contents::
    :depth: 1
@@ -30,26 +30,26 @@ looks like this::
 To set up a new research environment, open up a terminal on the cluster and
 run::
 
-    $> conda create --name=vivarium_csu_swissre_cancer python=3.6
+    $> conda create --name=vivarium_csu_swissre_breast_cancer python=3.6
     ...standard conda install stuff...
-    $> conda activate vivarium_csu_swissre_cancer
-    (vivarium_csu_swissre_cancer) $> conda install redis
-    (vivarium_csu_swissre_cancer) $> git clone git@github.com:ihmeuw/vivarium_csu_swissre_cancer.git
+    $> conda activate vivarium_csu_swissre_breast_cancer
+    (vivarium_csu_swissre_breast_cancer) $> conda install redis
+    (vivarium_csu_swissre_breast_cancer) $> git clone git@github.com:ihmeuw/vivarium_csu_swissre_breast_cancer.git
     ...you may need to do username/password stuff here...
-    (vivarium_csu_swissre_cancer) $> cd vivarium_csu_swissre_cancer
-    (vivarium_csu_swissre_cancer) $> pip install -e .
+    (vivarium_csu_swissre_breast_cancer) $> cd vivarium_csu_swissre_breast_cancer
+    (vivarium_csu_swissre_breast_cancer) $> pip install -e .
 
 
 Usage
 -----
 
 You'll find four directories inside the main
-``src/vivarium_csu_swissre_cancer`` package directory:
+``src/vivarium_csu_swissre_breast_cancer`` package directory:
 
 - ``components``
 
   This directory is for Python modules containing custom components for
-  the vivarium_csu_swissre_cancer project. You should work with the
+  the vivarium_csu_swissre_breast_cancer project. You should work with the
   engineering staff to help scope out what you need and get them built.
 
 - ``data``

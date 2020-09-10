@@ -4,8 +4,8 @@ from pathlib import Path
 from jinja2 import Template
 from loguru import logger
 
-from vivarium_csu_swissre_cancer import globals as project_globals, paths
-from vivarium_csu_swissre_cancer.utilities import sanitize_location
+from vivarium_csu_swissre_breast_cancer import globals as project_globals, paths
+from vivarium_csu_swissre_breast_cancer.utilities import sanitize_location
 
 
 def build_model_specifications(template: str, location: str, output_dir: str):

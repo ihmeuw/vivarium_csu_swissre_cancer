@@ -4,7 +4,7 @@ from typing import NamedTuple, List
 import pandas as pd
 import yaml
 
-from vivarium_csu_swissre_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
 
 
 SCENARIO_COLUMN = 'scenario'
