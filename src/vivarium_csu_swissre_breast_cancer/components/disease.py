@@ -1,7 +1,7 @@
 from vivarium_public_health.disease import (DiseaseState as DiseaseState_, DiseaseModel, SusceptibleState,
                                             RateTransition as RateTransition_, RecoveredState)
 
-from vivarium_csu_swissre_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
 
 
 class RateTransition(RateTransition_):

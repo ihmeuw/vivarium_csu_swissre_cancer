@@ -3,9 +3,9 @@ __all__ = [
     "__email__", "__license__", "__copyright__",
 ]
 
-__title__ = "vivarium_csu_swissre_cancer"
-__summary__ = "Research repository for the vivarium_csu_swissre_cancer project."
-__uri__ = "https://github.com/ihmeuw/vivarium_csu_swissre_cancer"
+__title__ = "vivarium_csu_swissre_breast_cancer"
+__summary__ = "Research repository for the vivarium_csu_swissre_breast_cancer project."
+__uri__ = "https://github.com/ihmeuw/vivarium_csu_swissre_breast_cancer"
 
 __version__ = "1.0.0"
 

@@ -5,13 +5,13 @@ from typing import NamedTuple
 
 from vivarium_public_health.utilities import TargetString
 
-from vivarium_csu_swissre_cancer.utilities import TruncnormDist
+from vivarium_csu_swissre_breast_cancer.utilities import TruncnormDist
 
 ####################
 # Project metadata #
 ####################
 
-PROJECT_NAME = 'vivarium_csu_swissre_cancer'
+PROJECT_NAME = 'vivarium_csu_swissre_breast_cancer'
 CLUSTER_PROJECT = 'proj_csu'
 
 CLUSTER_QUEUE = 'all.q'

@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import typing
 
-from vivarium_csu_swissre_cancer import globals as project_globals
-from vivarium_csu_swissre_cancer.utilities import get_triangular_dist_random_variable
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer.utilities import get_triangular_dist_random_variable
 
 
 if typing.TYPE_CHECKING:

@@ -25,8 +25,8 @@ from vivarium_gbd_access import gbd
 from vivarium_inputs import interface
 from vivarium_inputs.mapping_extension import alternative_risk_factors
 
-from vivarium_csu_swissre_cancer import paths, globals as project_globals
-from vivarium_csu_swissre_cancer.utilities import TruncnormDist
+from vivarium_csu_swissre_breast_cancer import paths, globals as project_globals
+from vivarium_csu_swissre_breast_cancer.utilities import TruncnormDist
 
 ARTIFACT_INDEX_COLUMNS = [
     'location',

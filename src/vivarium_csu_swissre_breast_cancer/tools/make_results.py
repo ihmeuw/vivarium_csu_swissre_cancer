@@ -3,7 +3,7 @@ import shutil
 
 from loguru import logger
 
-from vivarium_csu_swissre_cancer.results_processing import process_results
+from vivarium_csu_swissre_breast_cancer.results_processing import process_results
 
 
 def build_results(output_file: str):

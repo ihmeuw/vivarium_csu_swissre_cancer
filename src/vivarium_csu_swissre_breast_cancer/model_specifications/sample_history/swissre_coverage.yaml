@@ -6,26 +6,21 @@ components:
         risks:
             - Risk('risk_factor.family_history')
 
-    vivarium_csu_swissre_cancer.components:
+            - RiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.incidence_rate')
+            - RiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.incidence_rate')
+
+    vivarium_csu_swissre_breast_cancer.components:
         - BreastCancer()
         - ScreeningAlgorithm()
         - TreatmentEffect()
 
-        - LogNormalRiskEffect('risk_factor.family_history', 'sequela.lobular_carcinoma_in_situ.incidence_rate')
-        - LogNormalRiskEffect('risk_factor.family_history', 'sequela.ductal_carcinoma_in_situ.incidence_rate')
-
-        - MortalityObserver()
-        - DisabilityObserver()
-        - DiseaseObserver('breast_cancer', 'True')
-        - DiseaseObserver('screening_result')
-        - ScreeningObserver()
-        #- SampleHistoryObserver()
+        - SampleHistoryObserver()
 
 configuration:
     input_data:
-        location: {{ location_proper }}
+        location: SwissRE Coverage
         input_draw_number: 0
-        artifact_path: {{ artifact_directory }}/{{ location_sanitized }}.hdf
+        artifact_path: /share/costeffectiveness/artifacts/vivarium_csu_swissre_breast_cancer/swissre_coverage.hdf
     interpolation:
         order: 0
         # TODO change to False once we have data for all dates
@@ -40,12 +35,12 @@ configuration:
             month: 1
             day: 1
         end:
-            year: 2040
+            year: 2039
             month: 12
             day: 31
         step_size: 36.5 # Days
     population:
-        population_size: 200000
+        population_size: 1000
         age_start: 15
         age_end: 95
 
@@ -54,12 +49,10 @@ configuration:
 
     effect_of_family_history_on_lobular_carcinoma_in_situ:
         incidence_rate:
-            mean: 0.971
-            se: 0.27
+            relative_risk: 1.9
     effect_of_family_history_on_ductal_carcinoma_in_situ:
         incidence_rate:
-            mean: 0.971
-            se: 0.27
+            relative_risk: 1.9
 
     screening_algorithm:
         scenario: 'baseline'
@@ -85,4 +78,3 @@ configuration:
             by_age: False
             by_sex: True
             by_year: True
-

@@ -15,8 +15,8 @@ from loguru import logger
 import pandas as pd
 from vivarium.framework.artifact import Artifact, get_location_term, EntityKey
 
-from vivarium_csu_swissre_cancer import globals as project_globals
-from vivarium_csu_swissre_cancer.data import loader
+from vivarium_csu_swissre_breast_cancer import globals as project_globals
+from vivarium_csu_swissre_breast_cancer.data import loader
 
 
 def open_artifact(output_path: Path, location: str) -> Artifact:
