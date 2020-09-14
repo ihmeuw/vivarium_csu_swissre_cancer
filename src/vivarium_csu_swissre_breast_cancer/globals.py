@@ -332,7 +332,7 @@ NON_COUNT_TEMPLATES = [
 
 POP_STATES = ('living', 'dead', 'tracked', 'untracked')
 SEXES = ('male', 'female')
-YEARS = tuple(range(2020, 2040))
+YEARS = tuple(range(2020, 2041))
 AGE_COHORTS = tuple(f'{2020 - (x + 5)}_to_{2020 - x}' for x in range(15, 85, 5))
 EVENTS = (SCREENING_SCHEDULED, SCREENING_ATTENDED)
 CAUSES_OF_DEATH = ('other_causes', BREAST_CANCER_STATE_NAME,)
