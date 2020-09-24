@@ -153,7 +153,7 @@ class ResultsStratifier:
                     else:
                         pop_in_group = pop.loc[(stratification_group == stratification_key)
                                                & (screening_result == screening_state_name)]
-                    yield (stratification_key,), pop_in_group
+                    yield (f'{stratification_key}_screening_result_{screening_state_name}',), pop_in_group
             else:
                 stratification_key = self.get_stratification_key(stratification)
                 if pop.empty:
