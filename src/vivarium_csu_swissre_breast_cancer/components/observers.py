@@ -67,10 +67,6 @@ class ResultsStratifier:
 
         if self.has_screening_state:
             columns_required.append(project_globals.SCREENING_RESULT_MODEL_NAME)
-            self.stratification_levels['screening_result'] = {
-                state_name: get_screening_result_function(state_name)
-                for state_name in project_globals.SCREENING_MODEL_STATES
-            }
 
         self.population_view = builder.population.get_view(columns_required)
         self.pipeline_values = {pipeline: None for pipeline in self.pipelines}
@@ -92,9 +88,6 @@ class ResultsStratifier:
             self.population_values.loc[event.index, project_globals.SCREENING_RESULT_MODEL_NAME] = (
                 self.population_view.get(event.index).loc[event.index, project_globals.SCREENING_RESULT_MODEL_NAME]
             )
-
-            # Update stratification groups
-            self.set_stratification_groups(event.index)
 
     def get_all_stratifications(self) -> List[Tuple[Dict[str, str], ...]]:
         """
@@ -134,12 +127,12 @@ class ResultsStratifier:
         return ('' if not stratification
                 else '_'.join([f'{metric["metric"]}_{metric["category"]}' for metric in stratification]))
 
-    def group(self, population: pd.DataFrame) -> Iterable[Tuple[Tuple[str, ...], pd.DataFrame]]:
+    def group(self, pop: pd.DataFrame) -> Iterable[Tuple[Tuple[str, ...], pd.DataFrame]]:
         """Takes the full population and yields stratified subgroups.
 
         Parameters
         ----------
-        population
+        pop
             The population to stratify.
 
         Yields
@@ -148,15 +141,26 @@ class ResultsStratifier:
             corresponding to those labels.
 
         """
-        stratification_group = self.stratification_groups.loc[population.index]
+        stratification_group = self.stratification_groups.loc[pop.index]
         stratifications = self.get_all_stratifications()
         for stratification in stratifications:
-            stratification_key = self.get_stratification_key(stratification)
-            if population.empty:
-                pop_in_group = population
+            if self.has_screening_state:
+                screening_result = self.population_view.get(pop.index)[project_globals.SCREENING_RESULT_MODEL_NAME]
+                for screening_state_name in project_globals.SCREENING_MODEL_STATES:
+                    stratification_key = self.get_stratification_key(stratification)
+                    if pop.empty:
+                        pop_in_group = pop
+                    else:
+                        pop_in_group = pop.loc[(stratification_group == stratification_key)
+                                               & (screening_result == screening_state_name)]
+                    yield (stratification_key,), pop_in_group
             else:
-                pop_in_group = population.loc[stratification_group == stratification_key]
-            yield (stratification_key,), pop_in_group
+                stratification_key = self.get_stratification_key(stratification)
+                if pop.empty:
+                    pop_in_group = pop
+                else:
+                    pop_in_group = pop.loc[stratification_group == stratification_key]
+                yield (stratification_key,), pop_in_group
 
     @staticmethod
     def update_labels(measure_data: Dict[str, float], labels: Tuple[str, ...]) -> Dict[str, float]:
