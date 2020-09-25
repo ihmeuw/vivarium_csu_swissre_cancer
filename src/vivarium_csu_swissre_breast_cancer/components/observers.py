@@ -127,13 +127,15 @@ class ResultsStratifier:
         return ('' if not stratification
                 else '_'.join([f'{metric["metric"]}_{metric["category"]}' for metric in stratification]))
 
-    def group(self, pop: pd.DataFrame) -> Iterable[Tuple[Tuple[str, ...], pd.DataFrame]]:
+    def group(self, pop: pd.DataFrame, by_screening: bool = None) -> Iterable[Tuple[Tuple[str, ...], pd.DataFrame]]:
         """Takes the full population and yields stratified subgroups.
 
         Parameters
         ----------
         pop
             The population to stratify.
+        by_screening
+            toggles whether or not to stratify by screening state. if None, use default behavior of stratifier
 
         Yields
         ------
@@ -141,10 +143,11 @@ class ResultsStratifier:
             corresponding to those labels.
 
         """
+        by_screening = self.has_screening_state if by_screening is None else by_screening
         stratification_group = self.stratification_groups.loc[pop.index]
         stratifications = self.get_all_stratifications()
         for stratification in stratifications:
-            if self.has_screening_state:
+            if by_screening:
                 screening_result = self.population_view.get(pop.index)[project_globals.SCREENING_RESULT_MODEL_NAME]
                 for screening_state_name in project_globals.SCREENING_MODEL_STATES:
                     stratification_key = self.get_stratification_key(stratification)
@@ -201,7 +204,6 @@ class MortalityObserver(MortalityObserver_):
         pop.loc[pop.exit_time.isnull(), 'exit_time'] = self.clock()
 
         measure_getters = (
-            (get_person_time, ()),
             (get_deaths, (self.causes,)),
             (get_years_of_life_lost, (self.life_expectancy, self.causes)),
         )
@@ -213,6 +215,11 @@ class MortalityObserver(MortalityObserver_):
                 measure_data = measure_getter(*base_args, *extra_args)
                 measure_data = self.stratifier.update_labels(measure_data, labels)
                 metrics.update(measure_data)
+
+        for labels, pop_in_group in self.stratifier.group(pop, False):
+            base_args = (pop_in_group, self.config.to_dict(), self.start_time, self.clock(), self.age_bins)
+            measure_data = self.stratifier.update_labels(get_person_time(*base_args), labels)
+            metrics.update(measure_data)
 
         the_living = pop[(pop.alive == 'alive') & pop.tracked]
         the_dead = pop[pop.alive == 'dead']
