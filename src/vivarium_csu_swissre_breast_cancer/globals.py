@@ -117,8 +117,6 @@ PROBABILITY_ATTENDING_SCREENING_KEY = 'probability_attending_screening'
 ATTENDED_PREVIOUS_SCREENING_MULTIPLIER = 1.89
 RAMP_UP_START = datetime(2021, 1, 1)
 RAMP_UP_END = datetime(2030, 1, 1)
-SCREENING_ATTENDANCE_PROBABILITY_START = 0.30
-SCREENING_ATTENDANCE_PROBABILITY_END = 0.75
 
 
 class __Screening(NamedTuple):
@@ -137,9 +135,7 @@ class __Screening(NamedTuple):
     MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
     MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
 
-    BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base',
-                                                   SCREENING_ATTENDANCE_PROBABILITY_START,
-                                                   SCREENING_ATTENDANCE_PROBABILITY_START / 100,
+    BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base', 0.3, 0.003,
                                                    key=PROBABILITY_ATTENDING_SCREENING_KEY)
     START_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_attended_prev', 0.397, 0.00397,
                                                                   key=PROBABILITY_ATTENDING_SCREENING_KEY)
