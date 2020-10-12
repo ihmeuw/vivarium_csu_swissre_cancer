@@ -378,8 +378,8 @@ class StateMachineObserver:
             year_sex = f'in_{self.clock().year}_among_{sex}'
             counts_this_step = self.stratifier.update_labels(
                 {
-                    f'began_dcis_treatment_count_in_{year_sex}': sum(began_dcis_treatment_this_step),
-                    f'began_lcis_treatment_count_in_{year_sex}': sum(began_lcis_treatment_this_step),
+                    f'began_dcis_treatment_count_{year_sex}': sum(began_dcis_treatment_this_step),
+                    f'began_lcis_treatment_count_{year_sex}': sum(began_lcis_treatment_this_step),
                 }, labels
             )
             self.counts.update(counts_this_step)
