@@ -366,11 +366,11 @@ class StateMachineObserver:
             dcis_treatment = is_treated_in_state(project_globals.POSITIVE_DCIS_STATE_NAME,
                                                  self.coverage[project_globals.POSITIVE_DCIS_STATE_NAME],
                                                  pop.loc[:, 'treatment_propensity'],
-                                                 pop.loc[self.state_machine])
+                                                 pop.loc[:, self.state_machine])
             lcis_treatment = is_treated_in_state(project_globals.POSITIVE_LCIS_STATE_NAME,
                                                  self.coverage[project_globals.POSITIVE_LCIS_STATE_NAME],
                                                  pop.loc[:, 'treatment_propensity'],
-                                                 pop.loc[self.state_machine])
+                                                 pop.loc[:, self.state_machine])
 
             began_dcis_treatment_this_step = sex_mask & changed_state & dcis_treatment
             began_lcis_treatment_this_step = sex_mask & changed_state & lcis_treatment
