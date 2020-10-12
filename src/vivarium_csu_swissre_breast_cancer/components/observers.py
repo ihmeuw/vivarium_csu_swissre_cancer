@@ -13,6 +13,7 @@ from vivarium_public_health.metrics.utilities import (get_output_template, get_g
                                                       )
 
 from vivarium_csu_swissre_breast_cancer import globals as project_globals, paths
+from vivarium_csu_swissre_breast_cancer.components.treatment import get_treatment_coverage, is_treated_in_state
 
 if typing.TYPE_CHECKING:
     from vivarium.framework.engine import Builder
@@ -271,7 +272,8 @@ class StateMachineObserver:
         self.configuration_defaults = {
             'metrics': {state_machine: StateMachineObserver.configuration_defaults['metrics']['state_machine']}
         }
-        self.stratifier = ResultsStratifier(self.name, is_disease == 'True')
+        self.is_disease = is_disease == 'True'
+        self.stratifier = ResultsStratifier(self.name, self.is_disease)
 
     @property
     def name(self) -> str:
@@ -296,11 +298,19 @@ class StateMachineObserver:
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=[self.previous_state_column])
 
+        self.coverage = (
+            {} if self.is_disease
+            else get_treatment_coverage(builder.configuration.input_data.input_draw_number)
+        )
+
         columns_required = ['alive', self.state_machine, self.previous_state_column]
         if self.config['by_age']:
             columns_required += ['age']
         if self.config['by_sex']:
             columns_required += ['sex']
+        if not self.is_disease:
+            columns_required += ['treatment_propensity']
+
         self.population_view = builder.population.get_view(columns_required)
 
         builder.value.register_value_modifier('metrics', self.metrics)
@@ -341,10 +351,38 @@ class StateMachineObserver:
                 transition_counts_this_step = self.stratifier.update_labels(transition_counts_this_step, labels)
                 self.counts.update(transition_counts_this_step)
 
+            if not self.is_disease:
+                self.record_treatment(labels, pop_in_group)
+
     def metrics(self, index: pd.Index, metrics: Dict[str, float]):  # noqa
         metrics.update(self.counts)
         metrics.update(self.person_time)
         return metrics
+
+    def record_treatment(self, labels: Tuple[Tuple[str]], pop: pd.DataFrame):
+        for sex in project_globals.SEXES:
+            sex_mask = pop.loc[:, 'sex'] == sex.title()
+            changed_state = pop[self.previous_state_column] != pop[self.state_machine]
+            dcis_treatment = is_treated_in_state(project_globals.POSITIVE_DCIS_STATE_NAME,
+                                                 self.coverage[project_globals.POSITIVE_DCIS_STATE_NAME],
+                                                 pop.loc[:, 'treatment_propensity'],
+                                                 pop.loc[self.state_machine])
+            lcis_treatment = is_treated_in_state(project_globals.POSITIVE_LCIS_STATE_NAME,
+                                                 self.coverage[project_globals.POSITIVE_LCIS_STATE_NAME],
+                                                 pop.loc[:, 'treatment_propensity'],
+                                                 pop.loc[self.state_machine])
+
+            began_dcis_treatment_this_step = sex_mask & changed_state & dcis_treatment
+            began_lcis_treatment_this_step = sex_mask & changed_state & lcis_treatment
+
+            year_sex = f'in_{self.clock().year}_among_{sex}'
+            counts_this_step = self.stratifier.update_labels(
+                {
+                    f'began_dcis_treatment_count_in_{year_sex}': sum(began_dcis_treatment_this_step),
+                    f'began_lcis_treatment_count_in_{year_sex}': sum(began_lcis_treatment_this_step),
+                }, labels
+            )
+            self.counts.update(counts_this_step)
 
     def __repr__(self) -> str:
         return f"StateMachineObserver({self.state_machine})"
