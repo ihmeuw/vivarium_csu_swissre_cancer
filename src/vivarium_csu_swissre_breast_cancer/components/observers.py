@@ -13,6 +13,7 @@ from vivarium_public_health.metrics.utilities import (get_output_template, get_g
                                                       )
 
 from vivarium_csu_swissre_breast_cancer import globals as project_globals, paths
+from vivarium_csu_swissre_breast_cancer.components.treatment import get_treatment_coverage, is_treated_in_state
 
 if typing.TYPE_CHECKING:
     from vivarium.framework.engine import Builder
@@ -52,9 +53,6 @@ class ResultsStratifier:
                 (birth_year_bounds[1] <= self.population_values['age'])
                 & (self.population_values['age'] < (birth_year_bounds[0]))
             )
-
-        def get_screening_result_function(state_name):
-            return lambda: self.population_values[project_globals.SCREENING_RESULT_MODEL_NAME] == state_name
 
         self.stratification_levels = {
             'age_cohort': {age_cohort: get_age_range_function(age_cohort)
@@ -257,11 +255,11 @@ class DisabilityObserver(DisabilityObserver_):
             self.years_lived_with_disability.update(ylds_this_step)
 
 
-class DiseaseObserver:
+class StateMachineObserver:
     """Observes transition counts and person time for a cause."""
     configuration_defaults = {
         'metrics': {
-            'disease': {
+            'state_machine': {
                 'by_age': False,
                 'by_year': False,
                 'by_sex': False,
@@ -269,16 +267,17 @@ class DiseaseObserver:
         }
     }
 
-    def __init__(self, disease: str, stratify_by_screening_state: str = 'False'):
-        self.disease = disease
+    def __init__(self, state_machine: str, is_disease: str = 'True'):
+        self.state_machine = state_machine
         self.configuration_defaults = {
-            'metrics': {disease: DiseaseObserver.configuration_defaults['metrics']['disease']}
+            'metrics': {state_machine: StateMachineObserver.configuration_defaults['metrics']['state_machine']}
         }
-        self.stratifier = ResultsStratifier(self.name, stratify_by_screening_state == 'True')
+        self.is_disease = is_disease == 'True'
+        self.stratifier = ResultsStratifier(self.name, self.is_disease)
 
     @property
     def name(self) -> str:
-        return f'{self.disease}_observer'
+        return f'{self.state_machine}_observer'
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -286,24 +285,32 @@ class DiseaseObserver:
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
-        self.config = builder.configuration['metrics'][self.disease].to_dict()
+        self.config = builder.configuration['metrics'][self.state_machine].to_dict()
         self.clock = builder.time.clock()
         self.age_bins = get_age_bins(builder)
         self.counts = Counter()
         self.person_time = Counter()
 
-        self.states = project_globals.STATE_MACHINE_MAP[self.disease]['states']
-        self.transitions = project_globals.STATE_MACHINE_MAP[self.disease]['transitions']
+        self.states = project_globals.STATE_MACHINE_MAP[self.state_machine]['states']
+        self.transitions = project_globals.STATE_MACHINE_MAP[self.state_machine]['transitions']
 
-        self.previous_state_column = f'previous_{self.disease}'
+        self.previous_state_column = f'previous_{self.state_machine}'
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=[self.previous_state_column])
 
-        columns_required = ['alive', self.disease, self.previous_state_column]
+        self.coverage = (
+            {} if self.is_disease
+            else get_treatment_coverage(builder.configuration.input_data.input_draw_number)
+        )
+
+        columns_required = ['alive', self.state_machine, self.previous_state_column]
         if self.config['by_age']:
             columns_required += ['age']
         if self.config['by_sex']:
             columns_required += ['sex']
+        if not self.is_disease:
+            columns_required += ['treatment_propensity']
+
         self.population_view = builder.population.get_view(columns_required)
 
         builder.value.register_value_modifier('metrics', self.metrics)
@@ -323,14 +330,15 @@ class DiseaseObserver:
         for labels, pop_in_group in self.stratifier.group(pop):
             for state in self.states:
                 # noinspection PyTypeChecker
-                state_person_time_this_step = get_state_person_time(pop_in_group, self.config, self.disease, state,
-                                                                    self.clock().year, event.step_size, self.age_bins)
+                state_person_time_this_step = get_state_person_time(pop_in_group, self.config, self.state_machine,
+                                                                    state, self.clock().year, event.step_size,
+                                                                    self.age_bins)
                 state_person_time_this_step = self.stratifier.update_labels(state_person_time_this_step, labels)
                 self.person_time.update(state_person_time_this_step)
 
         # This enables tracking of transitions between states
         prior_state_pop = self.population_view.get(event.index)
-        prior_state_pop[self.previous_state_column] = prior_state_pop[self.disease]
+        prior_state_pop[self.previous_state_column] = prior_state_pop[self.state_machine]
         self.population_view.update(prior_state_pop)
 
     def on_collect_metrics(self, event: 'Event'):
@@ -338,18 +346,46 @@ class DiseaseObserver:
         for labels, pop_in_group in self.stratifier.group(pop):
             for transition in self.transitions:
                 # noinspection PyTypeChecker
-                transition_counts_this_step = get_transition_count(pop_in_group, self.config, self.disease, transition,
-                                                                   event.time, self.age_bins)
+                transition_counts_this_step = get_transition_count(pop_in_group, self.config, self.state_machine,
+                                                                   transition, event.time, self.age_bins)
                 transition_counts_this_step = self.stratifier.update_labels(transition_counts_this_step, labels)
                 self.counts.update(transition_counts_this_step)
 
-    def metrics(self, index: pd.Index, metrics: Dict[str, float]):
+            if not self.is_disease:
+                self.record_treatment(labels, pop_in_group)
+
+    def metrics(self, index: pd.Index, metrics: Dict[str, float]):  # noqa
         metrics.update(self.counts)
         metrics.update(self.person_time)
         return metrics
 
+    def record_treatment(self, labels: Tuple[Tuple[str]], pop: pd.DataFrame):
+        for sex in project_globals.SEXES:
+            sex_mask = pop.loc[:, 'sex'] == sex.title()
+            changed_state = pop[self.previous_state_column] != pop[self.state_machine]
+            dcis_treatment = is_treated_in_state(project_globals.POSITIVE_DCIS_STATE_NAME,
+                                                 self.coverage[project_globals.POSITIVE_DCIS_STATE_NAME],
+                                                 pop.loc[:, 'treatment_propensity'],
+                                                 pop.loc[:, self.state_machine])
+            lcis_treatment = is_treated_in_state(project_globals.POSITIVE_LCIS_STATE_NAME,
+                                                 self.coverage[project_globals.POSITIVE_LCIS_STATE_NAME],
+                                                 pop.loc[:, 'treatment_propensity'],
+                                                 pop.loc[:, self.state_machine])
+
+            began_dcis_treatment_this_step = sex_mask & changed_state & dcis_treatment
+            began_lcis_treatment_this_step = sex_mask & changed_state & lcis_treatment
+
+            year_sex = f'in_{self.clock().year}_among_{sex}'
+            counts_this_step = self.stratifier.update_labels(
+                {
+                    f'began_dcis_treatment_count_{year_sex}': sum(began_dcis_treatment_this_step),
+                    f'began_lcis_treatment_count_{year_sex}': sum(began_lcis_treatment_this_step),
+                }, labels
+            )
+            self.counts.update(counts_this_step)
+
     def __repr__(self) -> str:
-        return f"DiseaseObserver({self.disease})"
+        return f"StateMachineObserver({self.state_machine})"
 
 
 class ScreeningObserver:
@@ -417,7 +453,7 @@ class ScreeningObserver:
                 )
                 self.counts.update(counts_this_step)
 
-    def metrics(self, index: pd.Index, metrics: Dict[str, float]):
+    def metrics(self, index: pd.Index, metrics: Dict[str, float]):    # noqa
         metrics.update(self.counts)
         return metrics
 
@@ -482,7 +518,7 @@ class SampleHistoryObserver:
         priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
         self.sample_index = pd.Index(priority_index[:sample_size])
 
-    def on_time_step_cleanup(self, event):
+    def on_time_step_cleanup(self, event):  # noqa
         pop = self.population_view.get(self.sample_index)
 
         pipeline_results = []
@@ -506,29 +542,29 @@ class SampleHistoryObserver:
         record.set_index('date', append=True, inplace=True)
         self.history_snapshots.append(record)
 
-    def on_simulation_end(self, event):
+    def on_simulation_end(self, event): # noqa
         sample_history = pd.concat(self.history_snapshots, axis=0)
         sample_history.to_hdf(self.sample_history_parameters.path, key='trajectories')
 
 
 def get_state_person_time(pop: pd.DataFrame, config: Dict[str, bool],
-                          disease: str, state: str, current_year: Union[str, int],
+                          state_machine: str, state: str, current_year: Union[str, int],
                           step_size: pd.Timedelta, age_bins: pd.DataFrame) -> Dict[str, float]:
     """Custom person time getter that handles state column name assumptions"""
     base_key = get_output_template(**config).substitute(measure=f'{state}_person_time',
                                                         year=current_year)
-    base_filter = QueryString(f'alive == "alive" and {disease} == "{state}"')
+    base_filter = QueryString(f'alive == "alive" and {state_machine} == "{state}"')
     person_time = get_group_counts(pop, base_filter, base_key, config, age_bins,
                                    aggregate=lambda x: len(x) * to_years(step_size))
     return person_time
 
 
 def get_transition_count(pop: pd.DataFrame, config: Dict[str, bool],
-                         disease: str, transition: project_globals.TransitionString,
+                         state_machine: str, transition: project_globals.TransitionString,
                          event_time: pd.Timestamp, age_bins: pd.DataFrame) -> Dict[str, float]:
     """Counts transitions that occurred this step."""
-    event_this_step = ((pop[f'previous_{disease}'] == transition.from_state)
-                       & (pop[disease] == transition.to_state))
+    event_this_step = ((pop[f'previous_{state_machine}'] == transition.from_state)
+                       & (pop[state_machine] == transition.to_state))
     transitioned_pop = pop.loc[event_this_step]
     base_key = get_output_template(**config).substitute(measure=f'{transition}_event_count',
                                                         year=event_time.year)

@@ -16,8 +16,8 @@ components:
 
         - MortalityObserver()
         - DisabilityObserver()
-        - DiseaseObserver('breast_cancer', 'True')
-        - DiseaseObserver('screening_result')
+        - StateMachineObserver('breast_cancer')
+        - StateMachineObserver('screening_result', 'False')
         - ScreeningObserver()
         #- SampleHistoryObserver()
 

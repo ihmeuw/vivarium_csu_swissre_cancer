@@ -277,6 +277,8 @@ TOTAL_YLLS_COLUMN = 'years_of_life_lost'
 SCREENING_SCHEDULED = 'screening_scheduled_count'
 SCREENING_ATTENDED = 'screening_attended_count'
 
+
+
 # Columns from parallel runs
 INPUT_DRAW_COLUMN = 'input_draw'
 RANDOM_SEED_COLUMN = 'random_seed'
@@ -308,6 +310,8 @@ DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{DISEASE_TRANSITION}_event_count_in
 SCREENING_TRANSITION_COUNT_COLUMN_TEMPLATE = ('{SCREENING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}'
                                               '_age_cohort_{AGE_COHORT}_family_history_{HISTORY}')
 EVENT_COUNT_COLUMN_TEMPLATE = '{EVENT}_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}_family_history_{HISTORY}'
+TREATMENT_COUNT_TEMPLATE = ('began_{TREATMENT_TYPE}_treatment_count_in_{YEAR}_among_{SEX}_age_cohort_{AGE_COHORT}'
+                            '_family_history_{HISTORY}')
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -320,6 +324,7 @@ COLUMN_TEMPLATES = {
     'disease_transition_count': DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE,
     'screening_transition_count': SCREENING_TRANSITION_COUNT_COLUMN_TEMPLATE,
     'event_count': EVENT_COUNT_COLUMN_TEMPLATE,
+    'treatment_count': TREATMENT_COUNT_TEMPLATE,
 }
 
 NON_COUNT_TEMPLATES = [
@@ -333,6 +338,7 @@ EVENTS = (SCREENING_SCHEDULED, SCREENING_ATTENDED)
 CAUSES_OF_DEATH = ('other_causes', BREAST_CANCER_STATE_NAME,)
 CAUSES_OF_DISABILITY = (BREAST_CANCER_STATE_NAME,)
 FAMILY_HISTORY_STATE = ('positive', 'negative',)
+TREATMENT_TYPES = ('dcis', 'lcis',)
 
 TEMPLATE_FIELD_MAP = {
     'POP_STATE': POP_STATES,
@@ -347,6 +353,7 @@ TEMPLATE_FIELD_MAP = {
     'SCREENING_TRANSITION': SCREENING_MODEL_TRANSITIONS,
     'EVENT': EVENTS,
     'HISTORY': FAMILY_HISTORY_STATE,
+    'TREATMENT_TYPE': TREATMENT_TYPES,
 }
 
 

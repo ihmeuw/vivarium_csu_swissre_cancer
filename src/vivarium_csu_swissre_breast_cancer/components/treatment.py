@@ -1,13 +1,13 @@
 """Treatment model."""
 import numpy as np
 import pandas as pd
-import typing
+from typing import TYPE_CHECKING, Dict
 
 from vivarium_csu_swissre_breast_cancer import globals as project_globals
 from vivarium_csu_swissre_breast_cancer.utilities import get_triangular_dist_random_variable
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from vivarium.framework.engine import Builder
     from vivarium.framework.population import SimulantData
 
@@ -40,14 +40,7 @@ class TreatmentEffect:
             project_globals.POSITIVE_DCIS_STATE_NAME: project_globals.TREATMENT.DCIS_EFFICACY.get_random_variable(draw),
         }
 
-        self.coverage = {
-            project_globals.POSITIVE_LCIS_STATE_NAME: get_triangular_dist_random_variable(
-                *project_globals.TREATMENT.LCIS_COVERAGE_PARAMS, 'lcis_treatment_coverage', draw
-            ),
-            project_globals.POSITIVE_DCIS_STATE_NAME: get_triangular_dist_random_variable(
-                *project_globals.TREATMENT.DCIS_COVERAGE_PARAMS, 'dcis_treatment_coverage', draw
-            )
-        }
+        self.coverage = get_treatment_coverage(draw)
 
         required_columns = [project_globals.SCREENING_RESULT_MODEL_NAME]
         created_columns = [TREATMENT_PROPENSITY]
@@ -73,10 +66,23 @@ class TreatmentEffect:
 
     def treat(self, index, target, state_name):
         pop = self.population_view.get(index)
-
-        would_be_treated_if_positive = pop.loc[:, TREATMENT_PROPENSITY] < self.coverage[state_name]
-        is_positive = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME] == state_name
-
-        is_treated = would_be_treated_if_positive & is_positive
+        is_treated = is_treated_in_state(state_name, self.coverage[state_name], pop.loc[:, TREATMENT_PROPENSITY],
+                                         pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME])
 
         return target * (1 - self.efficacy[state_name] * is_treated)
+
+
+def get_treatment_coverage(draw: int) -> Dict[str, float]:
+    return {
+        project_globals.POSITIVE_LCIS_STATE_NAME: get_triangular_dist_random_variable(
+            *project_globals.TREATMENT.LCIS_COVERAGE_PARAMS, 'lcis_treatment_coverage', draw
+        ),
+        project_globals.POSITIVE_DCIS_STATE_NAME: get_triangular_dist_random_variable(
+            *project_globals.TREATMENT.DCIS_COVERAGE_PARAMS, 'dcis_treatment_coverage', draw
+        )
+    }
+
+
+def is_treated_in_state(state_name: str, coverage_threshold: float, treatment_propensity: pd.Series,
+                        state: pd.Series) -> pd.Series:
+    return (treatment_propensity < coverage_threshold) & (state == state_name)
