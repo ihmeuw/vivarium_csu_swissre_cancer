@@ -54,11 +54,11 @@ configuration:
 
     effect_of_family_history_on_lobular_carcinoma_in_situ:
         incidence_rate:
-            mean: 0.971
+            mean: 0.934
             se: 0.27
     effect_of_family_history_on_ductal_carcinoma_in_situ:
         incidence_rate:
-            mean: 0.971
+            mean: 0.934
             se: 0.27
 
     screening_algorithm:
