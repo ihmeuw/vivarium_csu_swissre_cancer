@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     install_requirements = [
         'vivarium==0.10.0',
-        'vivarium_public_health>=0.10.4',
+        'vivarium_public_health>=0.10.5',
         'click',
         'gbd_mapping==2.1.0',
         'jinja2',
