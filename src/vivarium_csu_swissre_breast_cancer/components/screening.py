@@ -129,7 +129,7 @@ class ScreeningAlgorithm:
 
         # Set next screening date for simulants who found a lump to today
         next_screening_date = pop.loc[:, project_globals.NEXT_SCREENING_DATE]
-        next_screening_date[found_lump] = self.clock()
+        next_screening_date.loc[found_lump] = self.clock()
 
         # Get all simulants with a scheduled screening
         screening_scheduled = (next_screening_date <= self.clock())
@@ -144,7 +144,7 @@ class ScreeningAlgorithm:
 
         # Update attended previous screening column
         attended_last_screening = pop.loc[:, project_globals.ATTENDED_LAST_SCREENING].copy()
-        attended_last_screening[screening_scheduled] = attends_screening.loc[screening_scheduled]
+        attended_last_screening.loc[screening_scheduled] = attends_screening.loc[screening_scheduled]
         attended_last_screening = attended_last_screening.astype(bool)
 
         # Screening results for everyone
@@ -153,11 +153,11 @@ class ScreeningAlgorithm:
 
         # Update previous screening column
         previous_screening = pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE].copy()
-        previous_screening[screening_scheduled] = pop.loc[screening_scheduled, project_globals.NEXT_SCREENING_DATE]
+        previous_screening.loc[screening_scheduled] = pop.loc[screening_scheduled, project_globals.NEXT_SCREENING_DATE]
 
         # Next scheduled screening for everyone
         next_screening = pop.loc[:, project_globals.NEXT_SCREENING_DATE].copy()
-        next_screening[screening_scheduled] = self._schedule_screening(
+        next_screening.loc[screening_scheduled] = self._schedule_screening(
             pop.loc[screening_scheduled, project_globals.NEXT_SCREENING_DATE],
             screening_result.loc[screening_scheduled],
             self.family_history(pop.index) == 'cat1'
