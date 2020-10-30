@@ -49,6 +49,7 @@ class ScreeningAlgorithm:
         draw = builder.configuration.input_data.input_draw_number
         self.screening_parameters = {parameter.name: parameter.get_random_variable(draw)
                                      for parameter in project_globals.SCREENING}
+        self.screening_parameters[project_globals.P_SYMPTOMS] = self.step_size() / project_globals.MEAN_SYMPTOMS
 
         self.family_history = builder.value.get_value('family_history.exposure')
 
@@ -122,15 +123,24 @@ class ScreeningAlgorithm:
         """Determine if someone will go for a screening"""
         # Get all simulants with a screening scheduled during this timestep
         pop = self.population_view.get(event.index, query='alive == "alive"')
-        screening_scheduled = pop.loc[:, project_globals.NEXT_SCREENING_DATE] < self.clock()
+
+        # Get all simulants who have breast cancer and found a lump on this timestep
+        found_lump = self.is_symptomatic(pop)
+
+        # Set next screening date for simulants who found a lump to today
+        next_screening_date = pop.loc[:, project_globals.NEXT_SCREENING_DATE]
+        next_screening_date.loc[found_lump] = self.clock()
+
+        # Get all simulants with a scheduled screening
+        screening_scheduled = (next_screening_date <= self.clock())
 
         # Get probability of attending the next screening for scheduled simulants
         p_attends_screening = self._get_screening_attendance_probability(pop)
 
         # Get all simulants who actually attended their screening
-        attends_screening: pd.Series = (
-                screening_scheduled & (self.randomness.get_draw(pop.index, 'attendance') < p_attends_screening)
-        )
+        attends_screening: pd.Series = (screening_scheduled &
+                                        (found_lump | (self.randomness.get_draw(pop.index, 'attendance')
+                                                       < p_attends_screening)))
 
         # Update attended previous screening column
         attended_last_screening = pop.loc[:, project_globals.ATTENDED_LAST_SCREENING].copy()
@@ -139,7 +149,7 @@ class ScreeningAlgorithm:
 
         # Screening results for everyone
         screening_result = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME].copy()
-        screening_result.loc[attends_screening] = self._do_screening(pop.loc[attends_screening, :])
+        screening_result[attends_screening] = self._do_screening(pop.loc[attends_screening, :])
 
         # Update previous screening column
         previous_screening = pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE].copy()
@@ -203,7 +213,7 @@ class ScreeningAlgorithm:
 
     def _do_screening(self, pop: pd.Series) -> pd.Series:
         """Perform screening for all simulants who attended their screening"""
-        screened = (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
+        screened = (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70) & (pop.loc[:, SEX] == 'Female')
         family_history = self.family_history(pop.index) == 'cat1'
         in_remission = pop.loc[:, project_globals.BREAST_CANCER_MODEL_NAME] == project_globals.RECOVERED_STATE_NAME
         has_lcis_dcis = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME].isin([
@@ -211,30 +221,28 @@ class ScreeningAlgorithm:
             project_globals.POSITIVE_DCIS_STATE_NAME
         ])
 
+        found_lump = self.is_symptomatic(pop)
         screened_remission = screened & in_remission
-        mri = screened & family_history
-        ultrasound = ~family_history & has_lcis_dcis & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 45)
-        mammogram_ultrasound = ~family_history & has_lcis_dcis & (45 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70)
-        mammogram = screened & ~family_history & ~has_lcis_dcis
+        mri = screened & family_history & ~found_lump & ~in_remission
+        ultrasound = (screened & ~family_history & has_lcis_dcis & ~found_lump & ~in_remission
+                      & (30 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 45))
+        mammogram_ultrasound = (screened & ~family_history & has_lcis_dcis & ~found_lump & ~in_remission
+                                & (45 <= pop.loc[:, AGE]) & (pop.loc[:, AGE] < 70))
+        mammogram = screened & ~family_history & ~has_lcis_dcis & ~found_lump & ~in_remission
 
         # Get sensitivity values for all individuals
         # TODO address different sensitivity values for tests of different conditions
         sensitivity = pd.Series(0.0, index=pop.index)
+        sensitivity.loc[found_lump] = self.screening_parameters[project_globals.SCREENING.FOUND_LUMP_SENSITIVITY.name]
         sensitivity.loc[screened_remission] = self.screening_parameters[
             project_globals.SCREENING.REMISSION_SENSITIVITY.name
         ]
-        sensitivity.loc[~in_remission & mri] = self.screening_parameters[project_globals.SCREENING.MRI_SENSITIVITY.name]
-        sensitivity.loc[~in_remission & ultrasound] = self.screening_parameters[
-            project_globals.SCREENING.ULTRASOUND_SENSITIVITY.name
-        ]
-        sensitivity.loc[~in_remission & mammogram_ultrasound] = self.screening_parameters[
+        sensitivity.loc[mri] = self.screening_parameters[project_globals.SCREENING.MRI_SENSITIVITY.name]
+        sensitivity.loc[ultrasound] = self.screening_parameters[project_globals.SCREENING.ULTRASOUND_SENSITIVITY.name]
+        sensitivity.loc[mammogram_ultrasound] = self.screening_parameters[
             project_globals.SCREENING.MAMMOGRAM_ULTRASOUND_SENSITIVITY.name
         ]
-        sensitivity.loc[~in_remission & mammogram] = self.screening_parameters[
-            project_globals.SCREENING.MAMMOGRAM_SENSITIVITY.name
-        ]
-
-        # TODO add in specificity if the specificity ever changes from 100%
+        sensitivity.loc[mammogram] = self.screening_parameters[project_globals.SCREENING.MAMMOGRAM_SENSITIVITY.name]
 
         # Perform screening on those who attended screening
         accurate_results = self.randomness.get_draw(pop.index, 'sensitivity') < sensitivity
@@ -263,3 +271,8 @@ class ScreeningAlgorithm:
         ).loc[~annual_screening]
 
         return previous_screening + time_to_next_screening.astype('timedelta64[ns]')
+
+    def is_symptomatic(self, pop: pd.DataFrame):
+        return ((pop.loc[:, project_globals.BREAST_CANCER_MODEL_NAME] == project_globals.BREAST_CANCER_STATE_NAME)
+                & (self.randomness.get_draw(pop.index, 'symptomatic_presentation')
+                   < self.screening_parameters[project_globals.P_SYMPTOMS]))

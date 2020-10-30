@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import itertools
 import math
 from typing import NamedTuple
@@ -117,6 +117,8 @@ PROBABILITY_ATTENDING_SCREENING_KEY = 'probability_attending_screening'
 ATTENDED_PREVIOUS_SCREENING_MULTIPLIER = 1.89
 RAMP_UP_START = datetime(2021, 1, 1)
 RAMP_UP_END = datetime(2030, 1, 1)
+P_SYMPTOMS = 'p_symptomatic_presentation'
+MEAN_SYMPTOMS = timedelta(days=365 * 3.5)
 
 
 class __Screening(NamedTuple):
@@ -134,6 +136,9 @@ class __Screening(NamedTuple):
 
     MAMMOGRAM_ULTRASOUND_SENSITIVITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_sensitivity', 0.939, 0.00939)
     MAMMOGRAM_ULTRASOUND_SPECIFICITY: TruncnormDist = TruncnormDist('mammogram_ultrasound_specificity', 1.0, 0.0)
+
+    FOUND_LUMP_SENSITIVITY: TruncnormDist = TruncnormDist('found_lump_sensitivity', 1.0, 0.0)
+    FOUND_LUMP_SPECIFICITY: TruncnormDist = TruncnormDist('found_lump_specificity', 1.0, 0.0)
 
     BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base', 0.3, 0.003,
                                                    key=PROBABILITY_ATTENDING_SCREENING_KEY)
@@ -276,7 +281,6 @@ TOTAL_YLLS_COLUMN = 'years_of_life_lost'
 
 SCREENING_SCHEDULED = 'screening_scheduled_count'
 SCREENING_ATTENDED = 'screening_attended_count'
-
 
 
 # Columns from parallel runs
