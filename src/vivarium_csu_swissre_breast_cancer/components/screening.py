@@ -149,7 +149,7 @@ class ScreeningAlgorithm:
 
         # Screening results for everyone
         screening_result = pop.loc[:, project_globals.SCREENING_RESULT_MODEL_NAME].copy()
-        screening_result[attends_screening] = self._do_screening(pop.loc[attends_screening, :])
+        screening_result.loc[attends_screening] = self._do_screening(pop.loc[attends_screening, :])
 
         # Update previous screening column
         previous_screening = pop.loc[:, project_globals.PREVIOUS_SCREENING_DATE].copy()
