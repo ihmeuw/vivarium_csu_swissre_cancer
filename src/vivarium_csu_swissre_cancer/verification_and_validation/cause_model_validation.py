@@ -9,47 +9,68 @@ def load_sim_count_data(sim_result_dir: str):
     df = {}
     fnames = ['deaths', 'disease_transition_count', 'disease_state_person_time', 'person_time']
     for fname in fnames:
-        df[fname] = pd.read_csv(sim_result_dir + fname + '.csv').iloc[:, 1:]
-        # get aggregated results if stratifications like risk or screening exist
+        df[fname] = pd.read_csv(sim_result_dir + fname + '.csv', index_col=0)
+        # get aggregated results if stratifications like HPV or screening exist
         if 'cause' in df[fname].columns:
             df[fname] = df[fname].groupby(columns + ['cause']).value.sum().reset_index()
         else:
             df[fname] = df[fname].groupby(columns).value.sum().reset_index()
     return df
 
-def get_all_causes_death_count(data: pd.DataFrame):
+def get_death_count(data: pd.DataFrame, cause_names: list, outcome_name: str):
     count = (data
+             .loc[data.cause.isin(cause_names)]
              .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'measure'])
              .value.sum()
              .reset_index())
-    count['cause'] = 'all_causes'
+    count['cause'] = outcome_name
     return count
 
 def get_cervical_cancer_incidence_count(data: pd.DataFrame):
-    """
-    benign_cervical_cancer_incidence_count = 
-    high_risk_hpv_to_benign_cervical_cancer_event_count +
-    susceptible_to_cervical_cancer_to_benign_cervical_cancer_event_count
+    benign_cervical_cancer_incidence_count = [
+        'high_risk_hpv_to_benign_cervical_cancer_with_hpv_event_count',
+        'susceptible_to_cervical_cancer_to_benign_cervical_cancer_event_count'
+    ]
+    invasive_cervical_cancer_incidence_count = [
+        'benign_cervical_cancer_to_invasive_cervical_cancer_event_count',
+        'benign_cervical_cancer_with_hpv_to_invasive_cervical_cancer_with_hpv_event_count'
+    ]
     
-    invasive_cervical_cancer_incidence_count = 
-    benign_cervical_cancer_to_cervical_cancer_event_count
-    """
-    idx_columns = ['age_cohort', 'year', 'input_draw', 'scenario']
-    hrhpv_to_bcc_event_count = (data
-                                .query('measure == "high_risk_hpv_to_benign_cervical_cancer_event_count"')
-                                .drop(columns='measure')
-                                .set_index(idx_columns))
-    s_to_bcc_event_count = (data
-                            .query('measure == "susceptible_to_cervical_cancer_to_benign_cervical_cancer_event_count"')
-                            .drop(columns='measure')
-                            .set_index(idx_columns))
-    bcc_incidence_count = (hrhpv_to_bcc_event_count + s_to_bcc_event_count).reset_index()
-    bcc_incidence_count['measure'] = 'benign_cervical_cancer_incidence'
+    benign_cervical_cancer_incidence = (data
+                                        .loc[data.measure.isin(benign_cervical_cancer_incidence_count)]
+                                        .groupby(['age_cohort', 'year', 'input_draw', 'scenario'])
+                                        .value.sum()
+                                        .reset_index())
+    benign_cervical_cancer_incidence['measure'] = 'benign_cervical_cancer_incidence'
     
-    icc_incidence_count = data.query('measure == "benign_cervical_cancer_to_cervical_cancer_event_count"')
-    icc_incidence_count['measure'] = 'invasive_cervical_cancer_incidence'
+    invasive_cervical_cancer_incidence = (data
+                                          .loc[data.measure.isin(invasive_cervical_cancer_incidence_count)]
+                                          .groupby(['age_cohort', 'year', 'input_draw', 'scenario'])
+                                          .value.sum()
+                                          .reset_index())
+    invasive_cervical_cancer_incidence['measure'] = 'invasive_cervical_cancer_incidence'
 
-    return bcc_incidence_count, icc_incidence_count
+    return benign_cervical_cancer_incidence, invasive_cervical_cancer_incidence
+
+def get_cervical_cancer_person_time(data: pd.DataFrame):
+    benign_cervical_cancer = ['benign_cervical_cancer', 'benign_cervical_cancer_with_hpv']
+    invasive_cervical_cancer = ['invasive_cervical_cancer', 'invasive_cervical_cancer_with_hpv']
+    
+    benign_cervical_cancer_person_time = (data
+                                          .loc[data.cause.isin(benign_cervical_cancer)]
+                                          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'measure'])
+                                          .value.sum()
+                                          .reset_index())
+    benign_cervical_cancer_person_time['cause'] = 'benign_cervical_cancer'
+    
+    invasive_cervical_cancer_person_time = (data
+                                            .loc[data.cause.isin(invasive_cervical_cancer)]
+                                            .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'measure'])
+                                            .value.sum()
+                                            .reset_index())
+    invasive_cervical_cancer_person_time['cause'] = 'invasive_cervical_cancer'
+
+    return benign_cervical_cancer_person_time, invasive_cervical_cancer_person_time
 
 def get_measure(data: pd.DataFrame, person_time: pd.DataFrame, measure: str, by_cause=True):
     join_columns = ['cause'] if by_cause else []
@@ -108,38 +129,48 @@ def plot_sim_vs_forecast(sim_data: pd.DataFrame, forecast_data: pd.DataFrame, ye
 if __name__ == '__main__':
     cancer_name = 'cervical_cancer'
     master_dir = '/home/j/Project/simulation_science/cancer/'
-    sim_result_dir = '/ihme/costeffectiveness/results/vivarium_csu_swissre_cervical_cancer/v1.0_cancer/swissre_coverage/2020_10_16_14_42_07/count_data/'
+    sim_result_dir = '/ihme/costeffectiveness/results/vivarium_csu_swissre_cervical_cancer/v2.0_screening/swissre_coverage/2020_11_04_16_36_09/count_data/'
     forecast_data_dir = master_dir + f'forecast/{cancer_name}/'
-    output_dir = master_dir + f'verification_and_validation/{cancer_name}/v1.0_cancer/'
+    output_dir = master_dir + f'verification_and_validation/{cancer_name}/v2.0_screening/'
 
     df = load_sim_count_data(sim_result_dir)
-    total_deaths = get_all_causes_death_count(df['deaths'])
-    bcc_incidence_count, icc_incidence_count = get_cervical_cancer_incidence_count(df['disease_transition_count'])
-    acmr = get_measure(total_deaths, df['person_time'], 'deaths')
-    icc_deaths = get_measure(df['deaths'].query('cause == "cervical_cancer"'), df['person_time'], 'deaths')
+    total_death_count = get_death_count(
+        df['deaths'],
+        ['invasive_cervical_cancer', 'invasive_cervical_cancer_with_hpv', 'other_causes'],
+        'all_causes'
+        )
+    icc_death_count = get_death_count(
+        df['deaths'],
+        ['invasive_cervical_cancer', 'invasive_cervical_cancer_with_hpv'],
+        'invasive_cervical_cancer'
+        )
+    _, icc_incidence_count = get_cervical_cancer_incidence_count(df['disease_transition_count'])
+    _, icc_pt = get_cervical_cancer_person_time(df['disease_state_person_time'])
+    acmr = get_measure(total_death_count, df['person_time'], 'deaths')
+    icc_deaths = get_measure(icc_death_count, df['person_time'], 'deaths')
     icc_incidence = get_measure(icc_incidence_count, df['person_time'], 'incidence', by_cause=False)
-    icc_prevalence = get_measure(df['disease_state_person_time'].query('cause == "cervical_cancer"'), df['person_time'], 'prevalence')
+    icc_prevalence = get_measure(icc_pt, df['person_time'], 'prevalence')
     sim_acmr, forecast_acmr = add_age_midpoint(acmr, 'acmr', forecast_data_dir)
     sim_deaths, forecast_deaths = add_age_midpoint(icc_deaths, 'deaths', forecast_data_dir)
     sim_incidence, forecast_incidence = add_age_midpoint(icc_incidence, 'incidence', forecast_data_dir)
     sim_prevalence, forecast_prevalence = add_age_midpoint(icc_prevalence, 'prevalence', forecast_data_dir)
 
-with PdfPages(output_dir + 'acmr.pdf') as pdf:
-    for year in range(2020, 2041):
-        plot_sim_vs_forecast(sim_acmr, forecast_acmr, year, 'acmr')
-        pdf.savefig(bbox_inches='tight')
+    with PdfPages(output_dir + 'acmr.pdf') as pdf:
+        for year in range(2020, 2041):
+            plot_sim_vs_forecast(sim_acmr, forecast_acmr, year, 'acmr')
+            pdf.savefig(bbox_inches='tight')
 
-with PdfPages(output_dir + 'deaths.pdf') as pdf:
-    for year in range(2020, 2041):
-        plot_sim_vs_forecast(sim_deaths, forecast_deaths, year, 'deaths')
-        pdf.savefig(bbox_inches='tight')
+    with PdfPages(output_dir + 'deaths.pdf') as pdf:
+        for year in range(2020, 2041):
+            plot_sim_vs_forecast(sim_deaths, forecast_deaths, year, 'deaths')
+            pdf.savefig(bbox_inches='tight')
 
-with PdfPages(output_dir + 'incidence.pdf') as pdf:
-    for year in range(2020, 2041):
-        plot_sim_vs_forecast(sim_incidence, forecast_incidence, year, 'incidence')
-        pdf.savefig(bbox_inches='tight')
+    with PdfPages(output_dir + 'incidence.pdf') as pdf:
+        for year in range(2020, 2041):
+            plot_sim_vs_forecast(sim_incidence, forecast_incidence, year, 'incidence')
+            pdf.savefig(bbox_inches='tight')
 
-with PdfPages(output_dir + 'prevalence.pdf') as pdf:
-    for year in range(2020, 2041):
-        plot_sim_vs_forecast(sim_prevalence, forecast_prevalence, year, 'prevalence')
-        pdf.savefig(bbox_inches='tight')
+    with PdfPages(output_dir + 'prevalence.pdf') as pdf:
+        for year in range(2020, 2041):
+            plot_sim_vs_forecast(sim_prevalence, forecast_prevalence, year, 'prevalence')
+            pdf.savefig(bbox_inches='tight')
