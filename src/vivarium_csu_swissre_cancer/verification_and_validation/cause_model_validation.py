@@ -129,9 +129,9 @@ def plot_sim_vs_forecast(sim_data: pd.DataFrame, forecast_data: pd.DataFrame, ye
 if __name__ == '__main__':
     cancer_name = 'cervical_cancer'
     master_dir = '/home/j/Project/simulation_science/cancer/'
-    sim_result_dir = '/ihme/costeffectiveness/results/vivarium_csu_swissre_cervical_cancer/v2.0_screening/swissre_coverage/2020_11_04_16_36_09/count_data/'
+    sim_result_dir = '/ihme/costeffectiveness/results/vivarium_csu_swissre_cervical_cancer/v3.0_hpv_vaccination/swissre_coverage/2020_11_10_15_52_13/count_data/'
     forecast_data_dir = master_dir + f'forecast/{cancer_name}/'
-    output_dir = master_dir + f'verification_and_validation/{cancer_name}/v2.0_screening/'
+    output_dir = master_dir + f'verification_and_validation/{cancer_name}/v3.0_hpv_vaccination/'
 
     df = load_sim_count_data(sim_result_dir)
     total_death_count = get_death_count(
