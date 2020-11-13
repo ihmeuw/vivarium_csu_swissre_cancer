@@ -76,7 +76,7 @@ def calc_vaccination_coverage(sim_result_dir: str):
                         .reset_index())
     return coverage_summary
 
-def calc_rr_hrHPV(sim_result_dir: str, person_time: pd.DataFrame):
+def calc_rr_hrHPV(sim_result_dir: str, disease_state_person_time: pd.DataFrame):
     transition_count = (pd
                         .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
                         .groupby(columns)
@@ -90,9 +90,17 @@ def calc_rr_hrHPV(sim_result_dir: str, person_time: pd.DataFrame):
                                        .loc[transition_count.measure == 'susceptible_to_cervical_cancer_to_benign_cervical_cancer_event_count']
                                        .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
                                        .value)
-    pt = person_time.set_index(['age_cohort', 'year', 'input_draw', 'scenario']).value
-    rr = (bcc_with_hpv_incidence_count / pt) / (bcc_without_hpv_incidence_count / pt)
-    rr = rr.reset_index()
+    hrhpv_pt = (disease_state_person_time
+                .loc[disease_state_person_time.cause == 'high_risk_hpv']
+                .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
+                .value)
+    susceptible_pt = (disease_state_person_time
+                      .loc[disease_state_person_time.cause == 'susceptible_to_cervical_cancer']
+                      .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
+                      .value)
+    bcc_with_hpv_incidence_rate = bcc_with_hpv_incidence_count / hrhpv_pt
+    bcc_without_hpv_incidence_rate = bcc_without_hpv_incidence_count / susceptible_pt
+    rr = (bcc_with_hpv_incidence_rate / bcc_without_hpv_incidence_rate).reset_index()
     rr = rr.loc[~((np.isinf(rr.value)) | (np.isnan(rr.value)))]
     return rr
 
