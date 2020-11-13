@@ -76,7 +76,7 @@ def calc_vaccination_coverage(sim_result_dir: str):
                         .reset_index())
     return coverage_summary
 
-def calc_rr_hrHPV(sim_result_dir: str):
+def calc_rr_hrHPV(sim_result_dir: str, person_time: pd.DataFrame):
     transition_count = (pd
                         .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
                         .groupby(columns)
