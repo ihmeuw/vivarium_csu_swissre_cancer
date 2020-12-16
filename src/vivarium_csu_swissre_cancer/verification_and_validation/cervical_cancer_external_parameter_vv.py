@@ -104,16 +104,40 @@ def calc_rr_hrHPV(sim_result_dir: str, disease_state_person_time: pd.DataFrame):
     rr = rr.loc[~((np.isinf(rr.value)) | (np.isnan(rr.value)))]
     return rr
 
-def calc_rr_vaccination(sim_result_dir: str):
-    transition_count = (pd
-                        .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
-                        .query('measure == "susceptible_to_cervical_cancer_to_high_risk_hpv_event_count"')
-                        .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
-                        .value.sum())
-    pt = (pd
-          .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
-          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
-          .value.sum())
+def calc_rr_vaccination(sim_result_dir: str, sink_state: str):
+    if sink_state == 'high_risk_hpv':
+      transition_count = (pd
+                          .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
+                          .query('measure == "susceptible_to_cervical_cancer_to_high_risk_hpv_event_count"')
+                          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+                          .value.sum())
+      pt = (pd
+            .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
+            .query('cause == "susceptible_to_cervical_cancer"')
+            .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+            .value.sum())
+    elif sink_state == 'benign_cervical_cancer':
+      transition_count = (pd
+                          .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
+                          .query('measure == "susceptible_to_cervical_cancer_to_benign_cervical_cancer_event_count"')
+                          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+                          .value.sum())
+      pt = (pd
+            .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
+            .query('cause == "susceptible_to_cervical_cancer"')
+            .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+            .value.sum())
+    else: #sink_state == 'benign_cervical_cancer_with_hpv':
+      transition_count = (pd
+                          .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
+                          .query('measure == "benign_cervical_cancer_to_benign_cervical_cancer_with_hpv_event_count"')
+                          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+                          .value.sum())
+      pt = (pd
+            .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
+            .query('cause == "benign_cervical_cancer"')
+            .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'vaccination_state'])
+            .value.sum())
     incidence_rate = (transition_count / pt).reset_index()
     unvaccinated = (incidence_rate
                     .loc[incidence_rate.vaccination_state == 'not_vaccinated']
@@ -124,5 +148,52 @@ def calc_rr_vaccination(sim_result_dir: str):
                   .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
                   .value)
     rr = (unvaccinated / vaccinated).reset_index()
+    rr = rr.loc[~((np.isinf(rr.value)) | (np.isnan(rr.value)))]
+    return rr
+
+def calc_treatment_coverage(sim_result_dir: str):
+    pt = (pd
+          .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
+          .groupby(['year', 'input_draw', 'scenario', 'treatment_state'])
+          .value.sum()
+          .reset_index())
+    untreated = (pt
+                 .loc[pt.treatment_state == 'not_treated']
+                 .set_index(['year', 'input_draw', 'scenario'])
+                 .value)
+    treated = (pt
+               .loc[pt.treatment_state == 'treated']
+               .set_index(['year', 'input_draw', 'scenario'])
+               .value)
+    coverage = (100 * treated / (untreated + treated)).reset_index()
+    coverage_summary = (coverage
+                        .groupby(['year', 'scenario'])
+                        .value.describe(percentiles=[.025, .975])
+                        .filter(['mean', '2.5%', '97.5%'])
+                        .reset_index())
+    return coverage_summary
+
+def calc_rr_treatment(sim_result_dir: str):
+    transition_count = (pd
+                        .read_csv(sim_result_dir + 'disease_transition_count.csv', index_col=0)
+                        .query('measure == "benign_cervical_cancer_to_invasive_cervical_cancer_event_count" \
+                               | measure == "benign_cervical_cancer_with_hpv_to_invasive_cervical_cancer_with_hpv_event_count"')
+                        .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'treatment_state'])
+                        .value.sum())
+    pt = (pd
+          .read_csv(sim_result_dir + 'disease_state_person_time.csv', index_col=0)
+          .query('cause == "benign_cervical_cancer" | cause == "benign_cervical_cancer_with_hpv"')
+          .groupby(['age_cohort', 'year', 'input_draw', 'scenario', 'treatment_state'])
+          .value.sum())
+    icc_incidence_rate = (transition_count / pt).reset_index()
+    untreated = (icc_incidence_rate
+                 .loc[icc_incidence_rate.treatment_state == 'not_treated']
+                 .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
+                 .value)
+    treated = (icc_incidence_rate
+               .loc[icc_incidence_rate.treatment_state == 'treated']
+               .set_index(['age_cohort', 'year', 'input_draw', 'scenario'])
+               .value)
+    rr = (untreated / treated).reset_index()
     rr = rr.loc[~((np.isinf(rr.value)) | (np.isnan(rr.value)))]
     return rr
