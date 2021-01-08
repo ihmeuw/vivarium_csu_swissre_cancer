@@ -282,7 +282,7 @@ def _transform_raw_data_granular(data_path: Path, is_log_data: bool = False) -> 
 
 def _transform_raw_data_preliminary(data_path: Path, is_log_data: bool = False) -> pd.DataFrame:
     """Transforms data to a form with draws in the index and raw locations as columns"""
-    raw_data: pd.DataFrame = pd.read_hdf(data_path)
+    raw_data: pd.DataFrame = pd.read_csv(data_path)
     age_bins = gbd.get_age_bins().set_index('age_group_name')
 
     processed_data = raw_data[raw_data['location_id'].isin(project_globals.SWISSRE_LOCATION_WEIGHTS)]
