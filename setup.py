@@ -23,6 +23,7 @@ if __name__ == "__main__":
         'gbd_mapping==2.1.0',
         'jinja2',
         'loguru',
+        'numexpr<=2.7.1',
         'numpy<=1.15.4',
         'pandas<0.25',
         'scipy',
