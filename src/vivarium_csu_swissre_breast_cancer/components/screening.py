@@ -1,4 +1,5 @@
 """Healthcare utilization and treatment model."""
+import math
 import typing
 
 import pandas as pd
@@ -170,18 +171,18 @@ class ScreeningAlgorithm:
 
     def _get_screening_attendance_probability(self, pop: pd.DataFrame) -> pd.Series:
         # Get base probability of screening attendance based on the current date
-        screening_start_attended_previous = self.screening_parameters[
-            project_globals.SCREENING.START_ATTENDED_PREV_ATTENDANCE.name
-        ]
-        screening_start_not_attended_previous = self.screening_parameters[
-            project_globals.SCREENING.START_NOT_ATTENDED_PREV_ATTENDANCE.name
-        ]
-        screening_end_attended_previous = self.screening_parameters[
-            project_globals.SCREENING.END_ATTENDED_PREV_ATTENDANCE.name
-        ]
-        screening_end_not_attended_previous = self.screening_parameters[
-            project_globals.SCREENING.END_NOT_ATTENDED_PREV_ATTENDANCE.name
-        ]
+        (screening_start_attended_previous,
+         screening_start_not_attended_previous) = get_probability_attending_params(
+            self.screening_parameters[project_globals.SCREENING.BASE_ATTENDANCE.name],
+            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER]
+        )
+
+        (screening_end_attended_previous,
+         screening_end_not_attended_previous) = get_probability_attending_params(
+            self.screening_parameters[project_globals.SCREENING.BASE_ATTENDANCE.name] + project_globals.RAMP_UP_SIZE,
+            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER]
+        )
+
         if self.scenario == project_globals.SCENARIOS.baseline:
             conditional_probabilities = {
                 True: screening_start_attended_previous,
@@ -276,3 +277,15 @@ class ScreeningAlgorithm:
         return ((pop.loc[:, project_globals.BREAST_CANCER_MODEL_NAME] == project_globals.BREAST_CANCER_STATE_NAME)
                 & (self.randomness.get_draw(pop.index, 'symptomatic_presentation')
                    < self.screening_parameters[project_globals.P_SYMPTOMS]))
+
+
+def get_probability_attending_params(prob: float, multiplier: float) -> typing.Tuple[float, float]:
+    prob = min(prob, 1.0)   # in case base attendance is greater 0.55 in a draw (this is nearly impossible)
+    b = (-1 + math.sqrt(1 - 4 * (multiplier - 1) * -prob * (1 - prob))) / (2 * (multiplier - 1))
+    c = b
+    a = prob - b
+    d = 1 - prob - b
+
+    p_attends_given_attended_previous = a / (a + c)
+    p_attends_given_not_attended_previous = b / (b + d)
+    return p_attends_given_attended_previous, p_attends_given_not_attended_previous

@@ -113,10 +113,11 @@ MAKE_ARTIFACT_KEY_GROUPS = [
 # Screening and Treatment Model Constants #
 ########################
 
-PROBABILITY_ATTENDING_SCREENING_KEY = 'probability_attending_screening'
-ATTENDED_PREVIOUS_SCREENING_MULTIPLIER = 1.89
+ATTENDED_PREVIOUS_SCREENING_MULTIPLIER_MEAN = 1.89
+ATTENDED_PREVIOUS_SCREENING_MULTIPLIER_STDDEV = 0.36
 RAMP_UP_START = datetime(2021, 1, 1)
 RAMP_UP_END = datetime(2030, 1, 1)
+RAMP_UP_SIZE = 0.45
 P_SYMPTOMS = 'p_symptomatic_presentation'
 MEAN_SYMPTOMS = timedelta(days=365 * 3.5)
 
@@ -140,16 +141,8 @@ class __Screening(NamedTuple):
     FOUND_LUMP_SENSITIVITY: TruncnormDist = TruncnormDist('found_lump_sensitivity', 1.0, 0.0)
     FOUND_LUMP_SPECIFICITY: TruncnormDist = TruncnormDist('found_lump_specificity', 1.0, 0.0)
 
-    BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base', 0.3, 0.003,
-                                                   key=PROBABILITY_ATTENDING_SCREENING_KEY)
-    START_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_attended_prev', 0.397, 0.00397,
-                                                                  key=PROBABILITY_ATTENDING_SCREENING_KEY)
-    START_NOT_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_not_attended_prev', 0.258,
-                                                                      0.00258, key=PROBABILITY_ATTENDING_SCREENING_KEY)
-    END_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('end_attendance_attended_prev', 0.782, 0.00782,
-                                                                key=PROBABILITY_ATTENDING_SCREENING_KEY)
-    END_NOT_ATTENDED_PREV_ATTENDANCE: TruncnormDist = TruncnormDist('end_attendance_not_attended_prev', 0.655, 0.00655,
-                                                                    key=PROBABILITY_ATTENDING_SCREENING_KEY)
+    BASE_ATTENDANCE: TruncnormDist = TruncnormDist('start_attendance_base', 0.3, 0.003)
+    ATTENDANCE_MULTIPLIER: TruncnormDist = TruncnormDist('attendance_multiplier', 1.89, 0.365, 1.0, math.inf)
 
     @property
     def name(self):
