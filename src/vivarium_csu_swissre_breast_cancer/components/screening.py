@@ -174,13 +174,13 @@ class ScreeningAlgorithm:
         (screening_start_attended_previous,
          screening_start_not_attended_previous) = get_probability_attending_params(
             self.screening_parameters[project_globals.SCREENING.BASE_ATTENDANCE.name],
-            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER]
+            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER.name]
         )
 
         (screening_end_attended_previous,
          screening_end_not_attended_previous) = get_probability_attending_params(
             self.screening_parameters[project_globals.SCREENING.BASE_ATTENDANCE.name] + project_globals.RAMP_UP_SIZE,
-            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER]
+            self.screening_parameters[project_globals.SCREENING.ATTENDANCE_MULTIPLIER.name]
         )
 
         if self.scenario == project_globals.SCENARIOS.baseline:
