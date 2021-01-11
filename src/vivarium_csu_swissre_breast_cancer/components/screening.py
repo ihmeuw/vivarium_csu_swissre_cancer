@@ -280,7 +280,7 @@ class ScreeningAlgorithm:
 
 
 def get_probability_attending_params(prob: float, multiplier: float) -> typing.Tuple[float, float]:
-    prob = min(prob, 1.0)   # in case base attendance is greater 0.55 in a draw (this is nearly impossible)
+    prob = min(prob, 1.0)   # in case base attendance is greater than 0.55 in a draw (this is nearly impossible)
     b = (-1 + math.sqrt(1 - 4 * (multiplier - 1) * -prob * (1 - prob))) / (2 * (multiplier - 1))
     c = b
     a = prob - b
